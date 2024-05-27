@@ -473,12 +473,12 @@ if __name__ == '__main__':
     # ntls = np.load('/data/jarry/code/africa-logs-final/ViViT/trues.npy')
 
     # Afr dar es salam
-    ntls = np.load('/data/jarry/code/africa-logs-final/ViViT/dar_es_salam/true_ntls.npy')
-    ntls = ntls.reshape(-1, 21)
+    # ntls = np.load('/data/jarry/code/africa-logs-final/ViViT/dar_es_salam/true_ntls.npy')
+    # ntls = ntls.reshape(-1, 21)
 
-    args.name = 'afr-dar-es-salam-true'
-    args.ntl_type = 'DMSP'
-    print(ntls.shape)
+    # args.name = 'afr-dar-es-salam-true'
+    # args.ntl_type = 'DMSP'
+    # print(ntls.shape)
 
     for norm in ['local']:
         for i in [5]:

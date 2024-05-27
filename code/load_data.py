@@ -10,7 +10,7 @@ class NTLSoftLoader():
 
     def __init__(self, data, ntl_type):
 
-        self.path_to_ntls = '../data/'
+        self.path_to_ntls = '../data'
         self.data = data #dodoma, Madagascar, south_mada, syria, dar_es_salam
         self.path_to_vis = os.path.join(self.path_to_ntls, self.data, "visu")
         os.makedirs(self.path_to_vis, exist_ok=True)
