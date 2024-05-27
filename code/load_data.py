@@ -29,7 +29,7 @@ class NTLSoftLoader():
                 print("Image size is : ", img_size)
             
             assert img_size == img.shape, f"Current image size is : {img.shape}, image size is {img_size}"
-            ntls.append(img)
+            ntls.append(img[0:200][0:200])
         
         self.ntls = np.array(ntls)
     
