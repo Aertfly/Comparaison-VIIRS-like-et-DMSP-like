@@ -150,6 +150,8 @@ class Kmeans():
         km.fit_transform(X)
 
         return km.cluster_centers_.reshape(n_clusters, X.shape[1]), km.labels_
+    
+
 
     def compute_and_save_dist_mat(self, X, dist, n_samples):
 
@@ -391,6 +393,8 @@ class Kmeans():
         fig = self.plot_kmeans_label_only(X_vis, preds)
         fig.savefig(self.expe_path + f'clusters_{self.n_clusters}.png')
         fig.savefig(self.expe_path + f'clusters_{self.n_clusters}.svg')
+    
+
 
     def __call__(self, X_raw, samples_for_distance_matrix, shape, refc=None):
 
@@ -405,7 +409,6 @@ class Kmeans():
             self.centroid, preds, _ = self.kmeans_fit(X)
 
         np.save(self.expe_path + 'centroids', self.centroid)
-
         if 'distance_matrix.npy' in os.listdir(self.distance_matrix_path):
             d_mat, rand = self.load_distance_matrix()
 
@@ -432,10 +435,13 @@ class Kmeans():
 if __name__ == '__main__':
 
     from load_data import NTLSoftLoader
+   
 
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", help="dataset name to use")
     parser.add_argument("--ntl_type", help="dataset name to use")
+
 
 
     args = parser.parse_args()
@@ -446,6 +452,9 @@ if __name__ == '__main__':
     ntls = data.ntls
     ntls = np.moveaxis(ntls, 0, -1)
     ntls = np.reshape(ntls, (-1, 21))
+    shapeRSZ = data.ntls[0].shape[:2]
+
+    
 
     # ntls = np.load('../jz/mean_all_256.npy')
     # args.name = 'dataset'
@@ -481,6 +490,7 @@ if __name__ == '__main__':
     # print(ntls.shape)
 
     for norm in ['local']:
+
         for i in [5]:
 
             params = {'n_clusters': i,
@@ -492,5 +502,4 @@ if __name__ == '__main__':
 
             km = Kmeans(**params)
 
-            km(ntls, samples_for_distance_matrix=1000, shape=(None,))
-
+            km(ntls, samples_for_distance_matrix=1000, shape=shapeRSZ)
