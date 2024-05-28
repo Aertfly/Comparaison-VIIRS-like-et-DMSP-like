@@ -31,12 +31,12 @@ def resizeImagesSaved(dir,dirName,dirOut,ignored=["syria"]):
             elif file.is_file() and isImage(file.path) and dirName not in ignored:
                 resizeSaved(file,dirOut)
     print(f"Fin du dir : {dirName}")
+
 def createDir(file,dirOut):
     dir = dirOut+"/"+file.name 
     if not(os.path.exists(dir) and os.path.isdir(dir)):
         os.mkdir(dir)
-
-                   
+       
 def resizeSaved(file,dirOut):
     print(f"      Je vais resize {file.name}")
     with rasterio.open(file) as tif:    
@@ -63,10 +63,14 @@ if __name__ == "__main__":
     saved = True
     print(f"Chemin du répertoire contenant les images à resize : {initDir}")
 
+    ignored = []
+    with os.scandir(initDir) as dirs:
+        for dir in dirs:
+            ignored.append(dir.name)
 
     try :
         if saved :
-            resizeImagesSaved(initDir,"dataResized",dirOut)  
+            resizeImagesSaved(initDir,"dataResized",dirOut,ignored=ignored)  
         # else :
         #     resizeImages(initDir)         
     except FileNotFoundError:
