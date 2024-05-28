@@ -431,7 +431,7 @@ class Kmeans():
 
 if __name__ == '__main__':
 
-    from load_data import NTLSoftLoader
+    from load_dataResized import NTLSoftLoaderResized
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", help="dataset name to use")
@@ -441,7 +441,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    data = NTLSoftLoader(args.name, ntl_type=args.ntl_type)
+    data = NTLSoftLoaderResized(args.name, ntl_type=args.ntl_type)
     data.load_ntls()
     ntls = data.ntls
     ntls = np.moveaxis(ntls, 0, -1)
@@ -492,5 +492,5 @@ if __name__ == '__main__':
 
             km = Kmeans(**params)
 
-            km(ntls, samples_for_distance_matrix=1000, shape=(None,))
+            km(ntls, samples_for_distance_matrix=1000, shape=data.getShape())
 

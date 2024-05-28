@@ -28,7 +28,7 @@ def resizeImagesSaved(dir,dirName,dirOut,ignored=[], fact=32):
                 print(f"On s'attaque  au dir {file.name}")
                 createDir(file,dirOut)
                 resizeImagesSaved(file.path,file.name,dirOut,ignored,fact)
-            elif file.is_file() and isImage(file.path) and dirName not in ignored:
+            elif file.is_file() and isImage(file.path) and dir not in ignored:
                 resizeSaved(file,dirOut,fact)
     print(f"Fin du dir : {dirName}")
 
@@ -65,12 +65,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--fact", help="facteur de division de l'image originale")
+    parser.add_argument("--ignored",help="Choisir les dossiers à ignorer")
     args = parser.parse_args()
 
-    ignored = []
-    with os.scandir(initDir) as dirs:
-        for dir in dirs:
-            ignored.append(dir.name)
+
+
     try :
         if saved :
             resizeImagesSaved(initDir,"dataResized",dirOut,ignored=ignored,fact=int(args.fact))  
@@ -80,3 +79,13 @@ if __name__ == "__main__":
         print(f"Le dossier {initDir} n'existe pas.")
     except PermissionError:
         print(f"Permission refusée pour accéder à {initDir}.")
+
+
+def ignoreDir(initDir,strongIgnore):
+    ignore = []
+    with os.scandir(initDir) as dirs:
+        for dir in dirs:
+            ignore.append(dir.path)
+            if(dir) in strongIgnore :
+                ignore += ignoreDir(dir)
+    return ignore

@@ -15,6 +15,10 @@ class NTLSoftLoader():
         self.path_to_vis = os.path.join(self.path_to_ntls, self.data, "visu")
         os.makedirs(self.path_to_vis, exist_ok=True)
         self.ntl_type = ntl_type
+        self.shape = (None,)
+    
+    def getShape(self):
+        return self.shape
     
     def load_ntls(self):
 
@@ -30,8 +34,8 @@ class NTLSoftLoader():
             
             assert img_size == img.shape, f"Current image size is : {img.shape}, image size is {img_size}"
             
-            ntls.append(img[0:200][0:200])
-        
+            ntls.append(img)
+        self.shape = img_size
         self.ntls = np.array(ntls)
     
     def load_sits(self):

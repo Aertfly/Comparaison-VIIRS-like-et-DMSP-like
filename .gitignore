@@ -1,5 +1,11 @@
-/data/syria
 /code/kmeans_analysis
+/data/syria
 /dataResized/syria
+/data/paris
+/dataResized/paris
+
+/code/__pycache__
 .pyc
 .npy
+
+
