@@ -484,7 +484,7 @@ if __name__ == '__main__':
         for i in [5]:
 
             params = {'n_clusters': i,
-                      'ntimes': 10,
+                      'ntimes': 1,
                       'dist': 'euc',
                       'norm': norm,
                       'dataset_name': args.name + '-' + args.ntl_type,
@@ -492,5 +492,5 @@ if __name__ == '__main__':
 
             km = Kmeans(**params)
 
-            km(ntls, samples_for_distance_matrix=1000, shape=(264, 165))
+            km(ntls, samples_for_distance_matrix=1000, shape=(None,))
 
