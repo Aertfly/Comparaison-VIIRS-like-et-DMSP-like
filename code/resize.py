@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 import rasterio
-
+import argparse
 
 # def resizeImages(dir):
 #     dirOut += dir.name
@@ -20,16 +20,16 @@ import rasterio
 #         img = tif.read()
 
 
-def resizeImagesSaved(dir,dirName,dirOut,ignored=["syria"]):
+def resizeImagesSaved(dir,dirName,dirOut,ignored=[], fact=32):
     dirOut += "/"+ dirName
     with os.scandir(dir) as files:
         for file in files:
             if file.is_dir():
                 print(f"On s'attaque  au dir {file.name}")
                 createDir(file,dirOut)
-                resizeImagesSaved(file.path,file.name,dirOut,ignored)
+                resizeImagesSaved(file.path,file.name,dirOut,ignored,fact)
             elif file.is_file() and isImage(file.path) and dirName not in ignored:
-                resizeSaved(file,dirOut)
+                resizeSaved(file,dirOut,fact)
     print(f"Fin du dir : {dirName}")
 
 def createDir(file,dirOut):
@@ -37,11 +37,11 @@ def createDir(file,dirOut):
     if not(os.path.exists(dir) and os.path.isdir(dir)):
         os.mkdir(dir)
        
-def resizeSaved(file,dirOut):
-    print(f"      Je vais resize {file.name}")
+def resizeSaved(file,dirOut,fact):
+    print(f"      Je vais resize {file.name} avec un facteur de {fact}")
     with rasterio.open(file) as tif:    
         img = np.squeeze(tif.read())
-        img = cv2.resize(img, (img.shape[1]//32, img.shape[0]//32), interpolation=cv2.INTER_AREA)
+        img = cv2.resize(img, (img.shape[1]//fact, img.shape[0]//fact), interpolation=cv2.INTER_AREA)
         np.save(dirOut+"/"+"/"+file.name[0:-4],img)
 
 
@@ -63,14 +63,17 @@ if __name__ == "__main__":
     saved = True
     print(f"Chemin du répertoire contenant les images à resize : {initDir}")
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--fact", help="facteur de division de l'image originale")
+    args = parser.parse_args()
+
     ignored = []
     with os.scandir(initDir) as dirs:
         for dir in dirs:
             ignored.append(dir.name)
-
     try :
         if saved :
-            resizeImagesSaved(initDir,"dataResized",dirOut,ignored=ignored)  
+            resizeImagesSaved(initDir,"dataResized",dirOut,ignored=ignored,fact=int(args.fact))  
         # else :
         #     resizeImages(initDir)         
     except FileNotFoundError:
