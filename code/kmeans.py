@@ -362,7 +362,7 @@ class Kmeans():
 
         return self.fig
 
-    def vis(self, X_vis, preds, shape, df_scores, refc=None):
+    def vis(self, X_vis, preds, shape, df_scores, refc=None, show = True):
 
         # gridspec inside gridspec
         self.fig = plt.figure(
@@ -386,13 +386,14 @@ class Kmeans():
         self.fig.savefig(self.expe_path + f'plot_kmeans_{self.n_clusters}.png', bbox_inches='tight')
         self.fig.savefig(self.expe_path + f'plot_kmeans_{self.n_clusters}.svg')
 
-        plt.show()
+        if show : plt.show()
 
+        print("saving graph...")
         fig = self.plot_kmeans_label_only(X_vis, preds)
         fig.savefig(self.expe_path + f'clusters_{self.n_clusters}.png')
         fig.savefig(self.expe_path + f'clusters_{self.n_clusters}.svg')
 
-    def __call__(self, X_raw, samples_for_distance_matrix, shape, refc=None):
+    def __call__(self, X_raw, samples_for_distance_matrix, shape, refc=None , show = True):
 
         print('--------------' + f'K = {self.n_clusters}' + '---------------')
         print('Starting at ', str(datetime.datetime.now()))
@@ -421,7 +422,7 @@ class Kmeans():
         print('Average Silhouette score : ', global_sil_scores.mean())
         print('Averaged per Class Silhouette Score : ', df_scores['mean'].mean())
 
-        self.vis(X, preds, shape, df_scores=df_scores, refc=refc)
+        self.vis(X, preds, shape, df_scores=df_scores, refc=refc,show=show)
 
         print('Ending at ', str(datetime.datetime.now()))
         toc = time.time()
@@ -436,9 +437,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", help="dataset name to use")
     parser.add_argument("--ntl_type", help="dataset name to use")
+    parser.add_argument("-c","--nbCluster",nargs='+',default=["5"],help="List of cluster ")
     parser.add_argument("--noResize",action='store_true',help ="tell the prog to not use resized data")
-
+    parser.add_argument("-s","--show",action='store_true',help ="ask for the end graoh to be shown")
     args = parser.parse_args()
+
+    clusters = [int(a) for a in args.nbCluster]
+    print("nb Cluster étudié",clusters)
+
+    show =  args.show
 
     if args.noResize :
         print("On utilise les données normales")
@@ -486,7 +493,7 @@ if __name__ == '__main__':
     # print(ntls.shape)
 
     for norm in ['local']:
-        for i in [5]:
+        for i in clusters:
 
             params = {'n_clusters': i,
                       'ntimes': 10,
@@ -497,5 +504,5 @@ if __name__ == '__main__':
 
             km = Kmeans(**params)
 
-            km(ntls, samples_for_distance_matrix=1000, shape=data.getShape())
+            km(ntls, samples_for_distance_matrix=1000, shape=data.getShape(),show=show)
 

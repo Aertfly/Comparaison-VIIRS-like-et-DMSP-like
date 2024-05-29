@@ -60,10 +60,11 @@ class NTLSoftLoader():
         fname = os.path.join(self.path_to_ntls,
                                  self.data,
                                  f'{self.data}_{year}.tif')
+
         with rasterio.open(fname) as tif:
             img = tif.read()
             img = np.moveaxis(img, 0, -1)
-        
+
         return img
 
     def load_one_ntl(self, year, ntl_type):
@@ -133,7 +134,7 @@ class NTLSoftLoader():
         fig.tight_layout()
         print("Data saved at : ", file_name)
         fig.savefig(self.path_to_vis + f"/{self.data}_{year}.png")
-
+        plt.close(fig)
 
 if __name__ == '__main__':
 
@@ -147,7 +148,7 @@ if __name__ == '__main__':
                         type=float, 
                         help="Brightness factor to apply, bust be in [0, 1]")
     parser.add_argument("--year",
-                        default=2010,
+
                         type=int,
                         help="The year to plot the data")
     parser.add_argument("--data",
@@ -160,6 +161,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     dataset = NTLSoftLoader(data=args.data,
                             ntl_type=args.ntl_type)
-
-    dataset.plot_optical_image(args.contrast, args.brightness, args.year)
+    if(args.year):
+        dataset.plot_optical_image(args.contrast, args.brightness, args.year)
+    else :
+        for year in range(2000,2021):
+            dataset.plot_optical_image(args.contrast, args.brightness, year)
 

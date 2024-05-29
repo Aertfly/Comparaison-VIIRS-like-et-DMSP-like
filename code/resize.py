@@ -68,11 +68,6 @@ def resizeSaved(file,dirOut,fact):
         img = cv2.resize(img, (img.shape[1]//fact, img.shape[0]//fact), interpolation=cv2.INTER_AREA)
         np.save(dirOut+"/"+"/"+file.name[0:-4],img)
 
-def toList(arg):
-    if(arg):
-        return arg.split("-")
-    else :
-        return []
 
 if __name__ == "__main__":
     directory_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -83,14 +78,14 @@ if __name__ == "__main__":
     saved = True
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fact", help="facteur de division de l'image originale")
-    parser.add_argument("--req",help="Villes à retailler de la forme Ville1-ville2-ville3")
-    parser.add_argument("--ignore",help="Villes à ignorer de la forme Ville1-ville2-ville3")
+    parser.add_argument("--fact","-f", help="facteur de division de l'image originale")
+    parser.add_argument("--req","-r",nargs='+',default=[],help="Villes à retailler de la forme Ville1-ville2-ville3")
+    parser.add_argument("--ignore","-i",nargs='+',default=[],help="Villes à ignorer de la forme Ville1-ville2-ville3")
     args = parser.parse_args()
 
-    requested = toList(args.req)
+    requested = args.req
     print("Villes demandées : ",requested)
-    ignore = toList(args.ignore)
+    ignore = args.ignore
     print("Villes à ignorer : ",ignore)
 
     try :
