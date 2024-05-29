@@ -436,16 +436,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", help="dataset name to use")
     parser.add_argument("--ntl_type", help="dataset name to use")
-    parser.add_argument("--resize",help ="bool, choose if we use resized data or no")
+    parser.add_argument("--noResize",action='store_true',help ="tell the prog to not use resized data")
 
     args = parser.parse_args()
 
-    if args.resize :
-         print("On utilise les données redimensionnées")
-         data = NTLSoftLoaderResized(args.name, ntl_type=args.ntl_type)
-    else :
+    if args.noResize :
         print("On utilise les données normales")
         data = NTLSoftLoaderResized(args.name, ntl_type=args.ntl_type)
+    else :
+        print("On utilise les données redimensionnées")
+        data = NTLSoftLoaderResized(args.name, ntl_type=args.ntl_type)
+
     data.load_ntls()
     ntls = data.ntls
     ntls = np.moveaxis(ntls, 0, -1)
