@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import argparse
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-
+import cv2
 
 class NTLSoftLoader():
 
@@ -61,11 +61,19 @@ class NTLSoftLoader():
                                  self.data,
                                  f'{self.data}_{year}.tif')
 
-        with rasterio.open(fname) as tif:
-            img = tif.read()
-            img = np.moveaxis(img, 0, -1)
+        with rasterio.open(fname) as src:
+            image = src.read([1, 2, 3])  # Lire les bandes rouge, verte et bleue
 
-        return img
+
+        # Appliquer CLAHE à chaque canal
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        image_clahe = np.zeros_like(image)
+        for i in range(3):
+            image_clahe[i] = clahe.apply(image[i])
+
+        # Convertir l'image de Rasterio (bandes séparées) en une image compatible avec Matplotlib (canaux empilés)
+        image_clahe = np.transpose(image_clahe, (1, 2, 0))
+        return image_clahe
 
     def load_one_ntl(self, year, ntl_type):
         
@@ -91,7 +99,7 @@ class NTLSoftLoader():
         img = (img - img_min)/(img_max - img_min)
 
         #scale contrast
-        img *= contrast
+        #img *= contrast
 
         #scale brightness
         img += brightness
@@ -105,8 +113,8 @@ class NTLSoftLoader():
     def plot_optical_image(self, contrast, brightness, year):
 
         img = self.load_image(year)
-
         img = self.normalize(img, contrast=contrast, brightness=brightness)
+        
         ntl_dmsp = self.load_one_ntl(year, ntl_type="DMSP")
         ntl_viirs = self.load_one_ntl(year, ntl_type="VIIRS")
 
