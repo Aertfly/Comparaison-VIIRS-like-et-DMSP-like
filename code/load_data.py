@@ -115,10 +115,10 @@ class NTLSoftLoader():
 
         ax0.imshow(img)
 
-        im1 = ax1.imshow(ntl_dmsp)
-        # ax1.set_title("DMSP")
-        im2 = ax2.imshow(ntl_viirs)
-        # ax2.set_title("VIIRS")
+        im1 = ax1.imshow(ntl_dmsp,vmin=0,vmax=64)
+        ax1.set_title("DMSP")
+        im2 = ax2.imshow(ntl_viirs,vmin=0,vmax=200)
+        ax2.set_title("VIIRS")
         
         divider1 = make_axes_locatable(ax1)
         cax1 = divider1.append_axes("right", size="5%", pad=0.05)  # adjust size and pad as needed
@@ -140,15 +140,17 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--contrast",
+                        "-c",
                         default=1.,
                         type=float, 
                         help="Contrast factor to apply, must be gt 0.")
     parser.add_argument("--brightness", 
+                        "-b",
                         default=0., 
                         type=float, 
                         help="Brightness factor to apply, bust be in [0, 1]")
     parser.add_argument("--year",
-
+                        "-y",
                         type=int,
                         help="The year to plot the data")
     parser.add_argument("--data",
