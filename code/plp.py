@@ -65,6 +65,8 @@ class lit_pixel():
         ax2.plot(yearList, nbs, 'r-')
         ax2.set_ylabel('Nombres de pixel allumées', color='r')
 
+        plt.title(f"{self.sat} NTL - {self.country}")
+
         self.fig = fig
         if show : plt.show()
     
@@ -127,6 +129,10 @@ class combined(lit_pixel_resized):
 
         fig.legend(loc="upper right", bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)
         self.fig = fig
+
+        plt.title(f"{self.sat} NTL - {self.country}")
+
+        
         if show : plt.show()
     
 
