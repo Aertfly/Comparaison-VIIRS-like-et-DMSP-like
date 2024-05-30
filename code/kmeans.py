@@ -436,7 +436,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--name","-n", help="dataset name to use")
-    parser.add_argument("--ntl_type","-t", help="dataset name to use")
+    parser.add_argument("--ntl_type","-t", help="dataset type to use")
     parser.add_argument("-c","--nbCluster",nargs='+',default=["5"],help="List of cluster ")
     parser.add_argument("--noResize","-nr",action='store_true',help ="tell the prog to not use resized data")
     parser.add_argument("--noShow","-ns",action='store_false',help ="tell the end graph to not be shown")

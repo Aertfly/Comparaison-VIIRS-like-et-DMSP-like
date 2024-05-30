@@ -133,7 +133,7 @@ class combined(lit_pixel_resized):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--name","-n", help="dataset name to use")
-    parser.add_argument("--ntl_type","-t", help="dataset name to use")
+    parser.add_argument("--ntl_type","-t", help="dataset type to use")
     parser.add_argument("--noResize","-nr",action='store_true',help ="tell the prog to not use resized data")
     parser.add_argument("--noShow","-ns",action='store_false',help ="tell the end graph to not be shown")
     parser.add_argument("--combined","-c",action='store_true',help ="Combined VIIRS and DMSP on same graph")
