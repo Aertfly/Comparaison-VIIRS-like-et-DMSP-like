@@ -104,17 +104,17 @@ class combined(lit_pixel_resized):
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)
 
         fig,ax1 = plt.subplots()
-        ax1.plot(yearList, sums, 'b-')
+        ax1.plot(yearList, sums, 'b-',label="Somme des pixels allumées DMSP")
         ax1.set_xlabel('Années')
-        ax1.set_ylabel('Somme des pixels allumées DMSP', color='b')
+        ax2.set_ylabel('', color='r')
 
         tickYears = yearList[::5]
         ax1.set_xticks(tickYears)
         ax1.set_xticklabels(tickYears)
         
         ax2 = ax1.twinx()
-        ax2.plot(yearList, nbs, 'r-')
-        ax2.set_ylabel('Nombres de pixel allumées DMSP', color='r')
+        ax2.plot(yearList, nbs, 'r-',label="Nombres de pixel allumées DMSP")
+        ax2.set_ylabel('', color='r')
 
 
         self.sat = "VIIRS"
@@ -123,8 +123,7 @@ class combined(lit_pixel_resized):
 
         ax1.plot(yearList, sums, 'green',label="Somme des pixels allumées VIIRS")
             
-        ax2.plot(yearList, nbs, 'purple')
-        ax2.set_ylabel('Nombres de pixel allumées VIIRS', color='purple')
+        ax2.plot(yearList, nbs, 'purple',label="Nombres de pixel allumées VIIR")
 
         fig.legend(loc="upper right", bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)
         self.fig = fig
@@ -139,16 +138,17 @@ if __name__ == '__main__':
     parser.add_argument("--noShow","-ns",action='store_false',help ="tell the end graph to not be shown")
     parser.add_argument("--combined","-c",action='store_true',help ="Combined VIIRS and DMSP on same graph")
     args = parser.parse_args()
-
+    n = args.name.lower()
+    t =  args.ntl_type.upper()
     if args.combined :
         print("Combined : Génération d'un plot resized avec VIIRS et DMSP")
-        plot = combined(args.name,args.ntl_type)
+        plot = combined(n,t)
     elif args.noResize :
         print("noResize : Génération d'un plot avec des données normales")
-        plot =  lit_pixel(args.name,args.ntl_type)
+        plot =  lit_pixel(n,t)
     else :
         print("Génération d'un plot avec les données redimensionnées")
-        plot =  lit_pixel_resized(args.name,args.ntl_type)
+        plot =  lit_pixel_resized(n,t)
 
     print("Création du graph ...")
     plot(args.noShow)

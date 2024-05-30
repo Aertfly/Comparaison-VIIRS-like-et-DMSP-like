@@ -88,6 +88,7 @@ if __name__ == "__main__":
     ignore = args.ignore
     print("Villes à ignorer : ",ignore)
 
+
     try :
         if saved :
             startResizeSaved(initDir,dirOut,fact=args.fact,requested=requested,ignore=ignore)  

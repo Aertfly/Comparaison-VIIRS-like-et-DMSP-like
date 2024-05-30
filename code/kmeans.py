@@ -447,12 +447,16 @@ if __name__ == '__main__':
 
     show =  args.noShow
 
+
+    n = args.name.lower()
+    t =  args.ntl_type.upper()
+
     if args.noResize :
         print("On utilise les données normales")
-        data = NTLSoftLoaderResized(args.name, ntl_type=args.ntl_type)
+        data = NTLSoftLoaderResized(n, ntl_type=t)
     else :
         print("On utilise les données redimensionnées")
-        data = NTLSoftLoaderResized(args.name, ntl_type=args.ntl_type)
+        data = NTLSoftLoaderResized(n, ntl_type=t)
 
     data.load_ntls()
     ntls = data.ntls
