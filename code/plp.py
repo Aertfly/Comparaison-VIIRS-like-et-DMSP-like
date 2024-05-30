@@ -100,6 +100,7 @@ class combined(lit_pixel_resized):
     def makeGraph(self,show):
         yearList = [x for x in range(2000,2021)]
         self.sat = "DMSP"
+        print("--- LANCEMENT CALCUL DMSP ---")
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)
 
         fig,ax1 = plt.subplots()
@@ -117,15 +118,15 @@ class combined(lit_pixel_resized):
 
 
         self.sat = "VIIRS"
+        print("--- LANCEMENT CALCUL VIIRS ---")
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)
 
-        ax1.plot(yearList, sums, 'green')
-        ax1.set_ylabel('Somme des pixels allumées VIIRS', color='green')
-        
+        ax1.plot(yearList, sums, 'green',label="Somme des pixels allumées VIIRS")
+            
         ax2.plot(yearList, nbs, 'purple')
         ax2.set_ylabel('Nombres de pixel allumées VIIRS', color='purple')
 
-
+        fig.legend(loc="upper right", bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)
         self.fig = fig
         if show : plt.show()
     

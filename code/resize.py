@@ -78,7 +78,7 @@ if __name__ == "__main__":
     saved = True
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fact","-f", help="facteur de division de l'image originale")
+    parser.add_argument("--fact","-f",default=32,type=int, help="facteur de division de l'image originale")
     parser.add_argument("--req","-r",nargs='+',default=[],help="Villes à retailler de la forme Ville1-ville2-ville3")
     parser.add_argument("--ignore","-i",nargs='+',default=[],help="Villes à ignorer de la forme Ville1-ville2-ville3")
     args = parser.parse_args()
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     try :
         if saved :
-            startResizeSaved(initDir,dirOut,fact=int(args.fact),requested=requested,ignore=ignore)  
+            startResizeSaved(initDir,dirOut,fact=args.fact,requested=requested,ignore=ignore)  
     except FileNotFoundError:
         print(f"Le dossier {initDir} n'existe pas.")
     except PermissionError:
