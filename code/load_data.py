@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import argparse
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import cv2
+import rasterio.errors
 
 class NTLSoftLoader():
 
@@ -115,8 +116,15 @@ class NTLSoftLoader():
         img = self.load_image(year)
         img = self.normalize(img, contrast=contrast, brightness=brightness)
         
-        ntl_dmsp = self.load_one_ntl(year, ntl_type="DMSP")
-        ntl_viirs = self.load_one_ntl(year, ntl_type="VIIRS")
+        try :
+            ntl_dmsp = self.load_one_ntl(year, ntl_type="DMSP")
+            ntl_viirs = self.load_one_ntl(year, ntl_type="VIIRS")
+        except(rasterio.errors.RasterioIOError):
+            print("Impossible de charger les ntls")
+            fig, ax0 = plt.subplots()
+            ax0.imshow(img)
+            plt.show()
+            return
 
 
         fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
@@ -166,7 +174,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--ntl_type",
                         help="ntl type. DMSP or VIIRS")
-    
+
     parser.add_argument("--vmax",
                         "-m",
                         type=int,
