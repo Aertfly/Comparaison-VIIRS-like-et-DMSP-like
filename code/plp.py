@@ -68,6 +68,7 @@ class lit_pixel():
         
         ax1.set_xlabel('Années')
         ax1.set_ylabel('Somme des pixels allumées', color='b')
+        ax1.set_ylim(bottom=0)
 
         tickYears = yearList[::5] + [2013]
         tickYears.sort()
@@ -77,7 +78,7 @@ class lit_pixel():
         ax2 = ax1.twinx()
         ax2.plot(yearList, nbs, 'r-')
         ax2.set_ylabel('Nombres de pixel allumées', color='r')
-
+        ax2.set_ylim(bottom=0)
         plt.title(f"{self.sat} NTL - {self.country} - palier :{self.floor}")
 
         self.fig = fig
