@@ -83,6 +83,31 @@ class lit_pixel():
 
         self.fig = fig
         if show : plt.show()
+
+    def makeHistogram(self):
+        maximum = max(math.floor(pixel) for year in range(2000, 2021) for pixels in self.fetchImg(year) for pixel in pixels) + 1
+
+        repartition = [0]*maximum
+        
+
+        for year in range(2000, 2021):
+            img = self.fetchImg(year)
+            for i in range(len(img)):
+                for j in range(len(img[i])):
+                    repartition[math.floor(img[i][j])] += 1
+                    if img[i][j] > 150:
+                        pass
+                        #print(f"Pixel de luminosité {img[i][j]} en {i*32},{j*32} pour l'année {year}")
+
+        plt.figure(figsize=(10, 6))
+        plt.bar(range(len(repartition)), repartition)
+
+        plt.xlabel('Intensité des pixels')
+        plt.ylabel('Nombre de pixels')
+        plt.title(f'Intensité des pixels {self.sat} - {self.country}')
+
+        plt.show()
+
     
     def saveFig(self):
         print("Lancement de la sauvegarde du graph ...")
@@ -95,6 +120,7 @@ class lit_pixel():
     def __call__(self,show=True):
         self.makeGraph(show)
         self.saveFig()
+        #self.makeHistogram()
 
 class lit_pixel_resized(lit_pixel):
     def __init__(self,country,sat,floor,pth='../dataResized',out="lit_pixel_resized"):
