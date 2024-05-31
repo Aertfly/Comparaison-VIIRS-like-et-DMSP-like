@@ -110,7 +110,7 @@ class NTLSoftLoader():
 
         return img  
 
-    def plot_optical_image(self, contrast, brightness, year):
+    def plot_optical_image(self, contrast, brightness, year,vmax=10**5):
 
         img = self.load_image(year)
         img = self.normalize(img, contrast=contrast, brightness=brightness)
@@ -125,7 +125,7 @@ class NTLSoftLoader():
 
         im1 = ax1.imshow(ntl_dmsp,vmin=0,vmax=64)
         ax1.set_title("DMSP")
-        im2 = ax2.imshow(ntl_viirs,vmin=0,vmax=200)
+        im2 = ax2.imshow(ntl_viirs,vmin=0,vmax=vmax)
         ax2.set_title("VIIRS")
         
         divider1 = make_axes_locatable(ax1)
@@ -166,14 +166,21 @@ if __name__ == '__main__':
 
     parser.add_argument("--ntl_type",
                         help="ntl type. DMSP or VIIRS")
+    
+    parser.add_argument("--vmax",
+                        "-m",
+                        type=int,
+                        default=10**5,
+                        help="ntl type. DMSP or VIIRS")
 
 
     args = parser.parse_args()
     dataset = NTLSoftLoader(data=args.data,
                             ntl_type=args.ntl_type)
+    max = args.vmax
     if(args.year):
-        dataset.plot_optical_image(args.contrast, args.brightness, args.year)
+        dataset.plot_optical_image(args.contrast, args.brightness, args.year,max)
     else :
         for year in range(2000,2021):
-            dataset.plot_optical_image(args.contrast, args.brightness, year)
+            dataset.plot_optical_image(args.contrast, args.brightness, year,max)
 

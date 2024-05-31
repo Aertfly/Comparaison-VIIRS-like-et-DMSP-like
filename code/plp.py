@@ -4,6 +4,7 @@ import os
 import argparse
 import numpy as np
 import time
+import math
 
 
 class lit_pixel(): 
@@ -89,7 +90,6 @@ class lit_pixel():
 
         repartition = [0]*maximum
         
-
         for year in range(2000, 2021):
             img = self.fetchImg(year)
             for i in range(len(img)):
@@ -99,28 +99,37 @@ class lit_pixel():
                         pass
                         #print(f"Pixel de luminosité {img[i][j]} en {i*32},{j*32} pour l'année {year}")
 
-        plt.figure(figsize=(10, 6))
+        self.fig = plt.figure(figsize=(10, 6))
         plt.bar(range(len(repartition)), repartition)
 
         plt.xlabel('Intensité des pixels')
         plt.ylabel('Nombre de pixels')
         plt.title(f'Intensité des pixels {self.sat} - {self.country}')
-
+        
         plt.show()
 
     
-    def saveFig(self):
+    def saveFig(self,expe_path):
         print("Lancement de la sauvegarde du graph ...")
-        expe_path = "./lit_pixel_analysis/" + self.country + "/" + self.sat + "/" + str(self.floor)
+        
         os.makedirs(expe_path, exist_ok=True)
         self.fig.savefig(expe_path + f'/{self.out}.png', bbox_inches='tight')
         self.fig.savefig(expe_path + f'/{self.out}.svg')
         print("Sauvegarde réussit !")
 
-    def __call__(self,show=True):
-        self.makeGraph(show)
-        self.saveFig()
-        #self.makeHistogram()
+    def __call__(self,show=True,typeGraphs=["graph"]):
+        for typeGraph in typeGraphs:
+            match (typeGraph.lower()):
+                case "graphique"|"graph"|"g":
+                    self.makeGraph(show)
+                    expe_path = "./lit_pixel_analysis/" + self.country + "/" + self.sat + "/" + str(self.floor)
+                case "histogramme"|"hist"|"h":
+                    self.makeHistogram()
+                    expe_path = "./lit_pixel_analysis/" + self.country + "/" + self.sat + "/histogramme" 
+                    self.out = f"histogramme_{self.country}_{self.sat}" 
+                case _ :
+                    raise TypeError(f"Unhandled type of graph {typeGraph}")
+            self.saveFig(expe_path)
 
 class lit_pixel_resized(lit_pixel):
     def __init__(self,country,sat,floor,pth='../dataResized',out="lit_pixel_resized"):
@@ -189,9 +198,12 @@ if __name__ == '__main__':
     parser.add_argument("--noShow","-ns",action='store_false',help ="tell the end graph to not be shown")
     parser.add_argument("--combined","-c",action='store_true',help ="Combined VIIRS and DMSP on same graph")
     parser.add_argument("--floor","-f",default=0,type=int,help="ignore all pixel under this floor")
+    parser.add_argument("--graph_type","-g",default=["graph"],nargs='+', help="graph type to make")
+
     args = parser.parse_args()
     n = args.name.lower()
     t =  args.ntl_type.upper()
+
     if args.combined :
         print("Combined : Génération d'un plot resized avec VIIRS et DMSP")
         plot = combined(n,t,args.floor)
@@ -203,4 +215,7 @@ if __name__ == '__main__':
         plot =  lit_pixel_resized(n,t,args.floor)
 
     print("Création du graph ...")
-    plot(args.noShow)
+    try :
+        plot(args.noShow,args.graph_type)
+    except(TypeError) as e:
+        print(f"Error : {e}")
