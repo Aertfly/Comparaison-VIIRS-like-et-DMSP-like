@@ -13,7 +13,7 @@ class NTLSoftLoader():
 
         self.path_to_ntls = '../data'
         self.data = data #dodoma, Madagascar, south_mada, syria, dar_es_salam
-        self.path_to_vis = os.path.join(self.path_to_ntls, self.data, "visu")
+        self.path_to_vis = f"../analysis/{data}/visu"
         os.makedirs(self.path_to_vis, exist_ok=True)
         self.ntl_type = ntl_type
         self.shape = (None,)
@@ -37,6 +37,7 @@ class NTLSoftLoader():
             
             ntls.append(img)
         self.shape = img_size
+        print("Taille d'image",img_size)
         self.ntls = np.array(ntls)
     
     def load_sits(self):

@@ -1,11 +1,9 @@
 /code/kmeans_analysis
 /code/lit_pixel_analysis
 /code/__pycache__
-/data/syria
-/dataResized/syria
-/data/paris
-/dataResized/paris
+/data
+/dataResized
 .pyc
 .npy
-
+/analysis
 

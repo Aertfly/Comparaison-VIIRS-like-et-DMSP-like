@@ -6,13 +6,12 @@ import numpy as np
 import time
 import math
 
-
 class lit_pixel(): 
     def __init__(self,country,sat,floor,pth="../data",out="lit_pixel"):
         self.sat = sat
         self.pathToData = pth
         self.country = country
-        self.out = out
+        self.out = out + f"_{country}_{sat}"
         self.floor = floor
 
     def fetchImg(self,year):
@@ -87,7 +86,7 @@ class lit_pixel():
 
     def makeHistogram(self):
         maximum = max(math.floor(pixel) for year in range(2000, 2021) for pixels in self.fetchImg(year) for pixel in pixels) + 1
-
+        print("Intensité max :",maximum)
         repartition = [0]*maximum
         
         for year in range(2000, 2021):
@@ -109,12 +108,14 @@ class lit_pixel():
         plt.show()
 
     
-    def saveFig(self,expe_path):
+    def saveFig(self,expe_path,out = ""):
+        if out == "": 
+            out = self.out
         print("Lancement de la sauvegarde du graph ...")
         
         os.makedirs(expe_path, exist_ok=True)
-        self.fig.savefig(expe_path + f'/{self.out}.png', bbox_inches='tight')
-        self.fig.savefig(expe_path + f'/{self.out}.svg')
+        self.fig.savefig(expe_path + f'/{out}.png', bbox_inches='tight')
+        self.fig.savefig(expe_path + f'/{out}.svg')
         print("Sauvegarde réussit !")
 
     def __call__(self,show=True,typeGraphs=["graph"]):
@@ -122,18 +123,18 @@ class lit_pixel():
             match (typeGraph.lower()):
                 case "graphique"|"graph"|"g":
                     self.makeGraph(show)
-                    expe_path = "./lit_pixel_analysis/" + self.country + "/" + self.sat + "/" + str(self.floor)
+                    expe_path = "../analysis/"+ self.country + "/" + self.sat + "/lit_pixel_analysis/" + str(self.floor)
+                    self.saveFig(expe_path)
                 case "histogramme"|"hist"|"h":
                     self.makeHistogram()
-                    expe_path = "./lit_pixel_analysis/" + self.country + "/" + self.sat + "/histogramme" 
-                    self.out = f"histogramme_{self.country}_{self.sat}" 
+                    expe_path = "../analysis/" + self.country + "/" + self.sat + "/lit_pixel_analysis/histogramme"  
+                    self.saveFig(expe_path,f"histogramme_{self.country}_{self.sat}")
                 case _ :
                     raise TypeError(f"Unhandled type of graph {typeGraph}")
-            self.saveFig(expe_path)
+            
 
 class lit_pixel_resized(lit_pixel):
     def __init__(self,country,sat,floor,pth='../dataResized',out="lit_pixel_resized"):
-        
         super().__init__(country,sat,floor,pth=pth,out=out)
 
     def fetchImg(self,year):
@@ -158,7 +159,6 @@ class combined(lit_pixel_resized):
         plt.title(f"DMSP et VIIRS - {self.country} - palier :{self.floor}")
         maskAfter = np.ma.masked_where((np.array(yearList) > 2013), yearList)
         maskBefore = np.ma.masked_where((np.array(yearList) < 2013), yearList)
-        mask = self.getMask(yearList)
         ax1.plot(yearList, np.ma.masked_array(sums, maskAfter.mask), 'b-o',label="DMSP : Somme allumés")
         ax1.plot(maskBefore, np.ma.masked_array(sums, maskBefore.mask), 'b--o')  
 

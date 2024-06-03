@@ -69,8 +69,8 @@ class Kmeans():
         self.norm_name = norm
 
         # saving path
-        self.src_path = path + f'kmeans_analysis/{dataset_name}/'
-        self.distance_matrix_path = self.src_path + f'{self.dist_name}/' + f'{self.norm_name}/'
+        self.src_path = path + f'../analysis/{dataset_name}/kmeans_analysis/'
+        self.distance_matrix_path = self.src_path #+ f'{self.dist_name}/' + f'{self.norm_name}/'
         self.expe_path = self.distance_matrix_path + f'{self.n_clusters}/'
         os.makedirs(self.expe_path, exist_ok=True)
 
@@ -432,7 +432,8 @@ class Kmeans():
 
 if __name__ == '__main__':
 
-    from load_dataResized import NTLSoftLoaderResized
+    from load_data_resized import NTLSoftLoaderResized
+    from load_data import NTLSoftLoader
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--name","-n", help="dataset name to use")
@@ -453,7 +454,7 @@ if __name__ == '__main__':
 
     if args.noResize :
         print("On utilise les données normales")
-        data = NTLSoftLoaderResized(n, ntl_type=t)
+        data = NTLSoftLoader(n, ntl_type=t)
     else :
         print("On utilise les données redimensionnées")
         data = NTLSoftLoaderResized(n, ntl_type=t)
@@ -503,7 +504,7 @@ if __name__ == '__main__':
                       'ntimes': 10,
                       'dist': 'euc',
                       'norm': norm,
-                      'dataset_name': args.name + '-' + args.ntl_type,
+                      'dataset_name': args.name + '/' + args.ntl_type,
                       'x_range': range(2000, 2021)}
 
             km = Kmeans(**params)
