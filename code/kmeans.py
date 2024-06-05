@@ -56,7 +56,7 @@ all_norm = {'global': norm_global,
 
 class Kmeans():
 
-    def __init__(self, n_clusters, ntimes=1, dist='euc', norm='local', dataset_name='test', path='', x_range=None, aois=None, mask=None):
+    def __init__(self, n_clusters, ntimes=1, dist='euc', norm='local', dataset_name='test', path='', x_range=None, aois=None, mask=None,city_name=None,ntl_type=None):
         self.n_clusters = n_clusters
         self.ntimes = ntimes
 
@@ -80,6 +80,10 @@ class Kmeans():
         self.colors = plt.get_cmap('terrain')(colors)
         self.aois = aois
         self.mask = mask
+        
+        self.city_name = city_name
+        self.ntl_type = ntl_type
+
 
     def kmeans_plusplus(self, X, n_clusters, dist):
         index = np.random.randint(0, X.shape[0])
@@ -379,6 +383,8 @@ class Kmeans():
 
         subfig = self.make_cluster_map(preds, shape, df_scores=df_scores)
 
+        plt.suptitle(f'{self.city_name} - {self.ntl_type}', fontsize=16)
+
         # plt.suptitle(f'Norm : {self.norm_name}, dist : {self.dist_name}, K = {self.n_clusters}')
 
         self.main_grid.tight_layout(figure=self.fig)
@@ -505,7 +511,9 @@ if __name__ == '__main__':
                       'dist': 'euc',
                       'norm': norm,
                       'dataset_name': args.name + '/' + args.ntl_type,
-                      'x_range': range(2000, 2021)}
+                      'x_range': range(2000, 2021),
+                      'city_name': args.name,
+                      'ntl_type': args.ntl_type}
 
             km = Kmeans(**params)
 

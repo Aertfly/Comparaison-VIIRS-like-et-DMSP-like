@@ -4,15 +4,17 @@ import os
 import argparse
 import numpy as np
 import time
-import math
+
+def isOn(pix):
+    palier = 1.5
+    return pix >= palier
 
 class lit_pixel(): 
-    def __init__(self,country,sat,floor,pth="../data",out="lit_pixel"):
+    def __init__(self,country,sat,pth="../data",out="lit_pixel"):
         self.sat = sat
         self.pathToData = pth
         self.country = country
-        self.out = out + f"_{country}_{sat}"
-        self.floor = floor
+        self.out = out
 
     def fetchImg(self,year):
         imgPath = os.path.join(self.pathToData,
@@ -27,7 +29,7 @@ class lit_pixel():
         img = self.fetchImg(year)
         for pixels in img:
             for pixel in pixels:
-                if(pixel>self.floor):
+                if(isOn(pixel)):
                     assert pixel >=0 , "Devrait être positif"
                     sum+=pixel
                     nb += 1
@@ -45,97 +47,45 @@ class lit_pixel():
             print(f"Calcul terminé pour l'année {year} en {time.time() - ti} s")
         return (nbs,sums)
 
-    def getMasks(self,yearList):
-        print(self.sat,"DMSP"==self.sat)
-        mask = [np.ma.masked_where((np.array(yearList) > 2013), yearList)
-                    ,np.ma.masked_where((np.array(yearList) < 2013), yearList)]
-        if(self.sat == "DMSP"):
-            return (mask[0],mask[1])
-        else :
-            return  (mask[1],mask[0])
-        
-        
 
     def makeGraph(self,show):
         yearList = [x for x in range(2000,2021)]
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)
 
         fig,ax1 = plt.subplots()
-        (mask1,mask2) = self.getMasks(yearList)
-
-        ax1.plot(yearList, np.ma.masked_array(sums, mask1.mask), 'b-o')
-        ax1.plot(mask2, np.ma.masked_array(sums, mask2.mask), 'b--o')  
-        
+        ax1.plot(yearList, sums, 'b-')
         ax1.set_xlabel('Années')
         ax1.set_ylabel('Somme des pixels allumées', color='b')
-        ax1.set_ylim(bottom=0)
 
-        tickYears = yearList[::5] + [2013]
-        tickYears.sort()
+        tickYears = yearList[::5]
         ax1.set_xticks(tickYears)
         ax1.set_xticklabels(tickYears)
         
         ax2 = ax1.twinx()
         ax2.plot(yearList, nbs, 'r-')
         ax2.set_ylabel('Nombres de pixel allumées', color='r')
-        ax2.set_ylim(bottom=0)
-        plt.title(f"{self.sat} NTL - {self.country} - palier :{self.floor}")
+
+        plt.title(f"{self.sat} NTL - {self.country}")
 
         self.fig = fig
         if show : plt.show()
-
-    def makeHistogram(self):
-        maximum = max(math.floor(pixel) for year in range(2000, 2021) for pixels in self.fetchImg(year) for pixel in pixels) + 1
-        print("Intensité max :",maximum)
-        repartition = [0]*maximum
-        
-        for year in range(2000, 2021):
-            img = self.fetchImg(year)
-            for i in range(len(img)):
-                for j in range(len(img[i])):
-                    repartition[math.floor(img[i][j])] += 1
-                    if img[i][j] > 150:
-                        pass
-                        #print(f"Pixel de luminosité {img[i][j]} en {i*32},{j*32} pour l'année {year}")
-
-        self.fig = plt.figure(figsize=(10, 6))
-        plt.bar(range(len(repartition)), repartition)
-
-        plt.xlabel('Intensité des pixels')
-        plt.ylabel('Nombre de pixels')
-        plt.title(f'Intensité des pixels {self.sat} - {self.country}')
-        
-        plt.show()
-
     
-    def saveFig(self,expe_path,out = ""):
-        if out == "": 
-            out = self.out
+    def saveFig(self,):
         print("Lancement de la sauvegarde du graph ...")
-        
+        expe_path = "./lit_pixel_analysis/" + self.country + "/" + self.sat
         os.makedirs(expe_path, exist_ok=True)
-        self.fig.savefig(expe_path + f'/{out}.png', bbox_inches='tight')
-        self.fig.savefig(expe_path + f'/{out}.svg')
+        self.fig.savefig(expe_path + f'/{self.out}.png', bbox_inches='tight')
+        self.fig.savefig(expe_path + f'/{self.out}.svg')
         print("Sauvegarde réussit !")
 
-    def __call__(self,show=True,typeGraphs=["graph"]):
-        for typeGraph in typeGraphs:
-            match (typeGraph.lower()):
-                case "graphique"|"graph"|"g":
-                    self.makeGraph(show)
-                    expe_path = "../analysis/"+ self.country + "/" + self.sat + "/lit_pixel_analysis/" + str(self.floor)
-                    self.saveFig(expe_path)
-                case "histogramme"|"hist"|"h":
-                    self.makeHistogram()
-                    expe_path = "../analysis/" + self.country + "/" + self.sat + "/lit_pixel_analysis/histogramme"  
-                    self.saveFig(expe_path,f"histogramme_{self.country}_{self.sat}")
-                case _ :
-                    raise TypeError(f"Unhandled type of graph {typeGraph}")
-            
+    def __call__(self,show=True):
+        self.makeGraph(show)
+        self.saveFig()
 
 class lit_pixel_resized(lit_pixel):
-    def __init__(self,country,sat,floor,pth='../dataResized',out="lit_pixel_resized"):
-        super().__init__(country,sat,floor,pth=pth,out=out)
+    def __init__(self,country,sat,pth='../dataResized',out="lit_pixel_resized"):
+        
+        super().__init__(country,sat,pth=pth,out=out)
 
     def fetchImg(self,year):
         imgPath = os.path.join(self.pathToData,
@@ -146,8 +96,8 @@ class lit_pixel_resized(lit_pixel):
     
     
 class combined(lit_pixel_resized):
-    def __init__(self, country, sat, floor, pth='../dataResized', out="lit_pixel_combined"):
-        super().__init__(country, sat, floor, pth=pth, out=out)
+    def __init__(self, country, sat, pth='../dataResized', out="lit_pixel_combined"):
+        super().__init__(country, sat, pth, out)
 
     def makeGraph(self,show):
         yearList = [x for x in range(2000,2021)]
@@ -156,36 +106,32 @@ class combined(lit_pixel_resized):
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)
 
         fig,ax1 = plt.subplots()
-        plt.title(f"DMSP et VIIRS - {self.country} - palier :{self.floor}")
-        maskAfter = np.ma.masked_where((np.array(yearList) > 2013), yearList)
-        maskBefore = np.ma.masked_where((np.array(yearList) < 2013), yearList)
-        ax1.plot(yearList, np.ma.masked_array(sums, maskAfter.mask), 'b-o',label="DMSP : Somme allumés")
-        ax1.plot(maskBefore, np.ma.masked_array(sums, maskBefore.mask), 'b--o')  
-
+        ax1.plot(yearList, sums, 'b-',label="Somme des pixels allumées DMSP")
         ax1.set_xlabel('Années')
-        ax1.set_ylabel('SOMME', color='b')
+        ax2.set_ylabel('', color='r')
 
-        tickYears = yearList[::5] + [2013]
-        tickYears.sort
+        tickYears = yearList[::5]
         ax1.set_xticks(tickYears)
         ax1.set_xticklabels(tickYears)
         
         ax2 = ax1.twinx()
-        ax2.plot(yearList, nbs, 'r-',label="DMSP : Nombre allumés")
-        ax2.set_ylabel('NOMBRE', color='r')
+        ax2.plot(yearList, nbs, 'r-',label="Nombres de pixel allumées DMSP")
+        ax2.set_ylabel('', color='r')
 
 
         self.sat = "VIIRS"
         print("--- LANCEMENT CALCUL VIIRS ---")
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)
 
-        ax1.plot(yearList, np.ma.masked_array(sums, maskAfter.mask), 'g--o')
-        ax1.plot(maskBefore, np.ma.masked_array(sums, maskBefore.mask), 'g-o',label="VIIRS : Somme allumés")  
+        ax1.plot(yearList, sums, 'green',label="Somme des pixels allumées VIIRS")
             
-        ax2.plot(yearList, nbs, 'purple',label="VIIRS : Nombre allumé ")
+        ax2.plot(yearList, nbs, 'purple',label="Nombres de pixel allumées VIIR")
 
-        fig.legend(loc='lower right',fontsize=10, bbox_transform=fig.transFigure)
+        fig.legend(loc="upper right", bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)
         self.fig = fig
+
+        plt.title(f"{self.sat} NTL - {self.country}")
+
         
         if show : plt.show()
     
@@ -197,25 +143,18 @@ if __name__ == '__main__':
     parser.add_argument("--noResize","-nr",action='store_true',help ="tell the prog to not use resized data")
     parser.add_argument("--noShow","-ns",action='store_false',help ="tell the end graph to not be shown")
     parser.add_argument("--combined","-c",action='store_true',help ="Combined VIIRS and DMSP on same graph")
-    parser.add_argument("--floor","-f",default=0,type=int,help="ignore all pixel under this floor")
-    parser.add_argument("--graph_type","-g",default=["graph"],nargs='+', help="graph type to make")
-
     args = parser.parse_args()
     n = args.name.lower()
     t =  args.ntl_type.upper()
-
     if args.combined :
         print("Combined : Génération d'un plot resized avec VIIRS et DMSP")
-        plot = combined(n,t,args.floor)
+        plot = combined(n,t)
     elif args.noResize :
         print("noResize : Génération d'un plot avec des données normales")
-        plot =  lit_pixel(n,t,args.floor)
+        plot =  lit_pixel(n,t)
     else :
         print("Génération d'un plot avec les données redimensionnées")
-        plot =  lit_pixel_resized(n,t,args.floor)
+        plot =  lit_pixel_resized(n,t)
 
     print("Création du graph ...")
-    try :
-        plot(args.noShow,args.graph_type)
-    except(TypeError) as e:
-        print(f"Error : {e}")
+    plot(args.noShow)
