@@ -5,12 +5,15 @@ import argparse
 import numpy as np
 import time
 
-def isOn(pix):
-    palier = 1.5
-    return pix >= palier
+
+def normalize(li):
+    m = max(li)
+    for i in range(len(li)):
+        li[i] = li[i]/m
+    return li
 
 class lit_pixel(): 
-    def __init__(self,country,sat,pth="../data",out="lit_pixel"):
+    def __init__(self,country,sat,floor=0,pth="../data",out="lit_pixel"):
         self.sat = sat
         self.pathToData = pth
         self.country = country
@@ -29,7 +32,7 @@ class lit_pixel():
         img = self.fetchImg(year)
         for pixels in img:
             for pixel in pixels:
-                if(isOn(pixel)):
+                if(pixel>self.floor):
                     assert pixel >=0 , "Devrait être positif"
                     sum+=pixel
                     nb += 1
@@ -45,6 +48,8 @@ class lit_pixel():
             nbs.append(nb)
             sums.append(sum)
             print(f"Calcul terminé pour l'année {year} en {time.time() - ti} s")
+        sums = normalize(sums)
+        nbs = normalize(nbs)
         return (nbs,sums)
 
 
@@ -69,8 +74,41 @@ class lit_pixel():
 
         self.fig = fig
         if show : plt.show()
+
+    def getMax(self):
+        print(os.path.join(self.pathToData,
+                                 self.country,
+                                 self.sat,
+                                 f'ntl_année.tif'))
+        return  max(math.floor(pixel) for year in range(2000, 2021) for pixels in self.fetchImg(year) for pixel in pixels) + 1
+
+    def makeHistogram(self):
+        maximum = self.getMax()
+        print("Intensité max :",maximum)
+        repartition = [0]*maximum
+        
+        for year in range(2000, 2021):
+            img = self.fetchImg(year)
+            for i in range(len(img)):
+                for j in range(len(img[i])):
+                    repartition[math.floor(img[i][j])] += 1
+                    if img[i][j] > 150:
+                        pass
+                        #print(f"Pixel de luminosité {img[i][j]} en {i*32},{j*32} pour l'année {year}")
+
+        self.fig = plt.figure(figsize=(10, 6))
+        plt.bar(range(len(repartition)), repartition)
+
+        plt.xlabel('Intensité des pixels')
+        plt.ylabel('Nombre de pixels')
+        plt.title(f'Intensité des pixels {self.sat} - {self.country}')
+        
+        plt.show()
+
     
-    def saveFig(self,):
+    def saveFig(self,expe_path,out = ""):
+        if out == "": 
+            out = self.out
         print("Lancement de la sauvegarde du graph ...")
         expe_path = "./lit_pixel_analysis/" + self.country + "/" + self.sat
         os.makedirs(expe_path, exist_ok=True)
@@ -83,9 +121,8 @@ class lit_pixel():
         self.saveFig()
 
 class lit_pixel_resized(lit_pixel):
-    def __init__(self,country,sat,pth='../dataResized',out="lit_pixel_resized"):
-        
-        super().__init__(country,sat,pth=pth,out=out)
+    def __init__(self,country,sat,floor=0,pth='../dataResized',out="lit_pixel_resized"):
+        super().__init__(country,sat,floor,pth=pth,out=out)
 
     def fetchImg(self,year):
         imgPath = os.path.join(self.pathToData,
@@ -104,9 +141,13 @@ class combined(lit_pixel_resized):
         self.sat = "DMSP"
         print("--- LANCEMENT CALCUL DMSP ---")
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)
-
         fig,ax1 = plt.subplots()
-        ax1.plot(yearList, sums, 'b-',label="Somme des pixels allumées DMSP")
+        plt.title(f"DMSP et VIIRS  - normalisé - {self.country} - palier :{self.floor}")
+        maskAfter = np.ma.masked_where((np.array(yearList) > 2013), yearList)
+        maskBefore = np.ma.masked_where((np.array(yearList) < 2013), yearList)
+        ax1.plot(yearList, np.ma.masked_array(sums, maskAfter.mask), 'b-o',label="DMSP : Somme allumés")
+        ax1.plot(maskBefore, np.ma.masked_array(sums, maskBefore.mask), 'b--o')  
+
         ax1.set_xlabel('Années')
         ax2.set_ylabel('', color='r')
 
@@ -122,8 +163,8 @@ class combined(lit_pixel_resized):
         self.sat = "VIIRS"
         print("--- LANCEMENT CALCUL VIIRS ---")
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)
-
-        ax1.plot(yearList, sums, 'green',label="Somme des pixels allumées VIIRS")
+        ax1.plot(yearList, np.ma.masked_array(sums, maskAfter.mask), 'g--o')
+        ax1.plot(maskBefore, np.ma.masked_array(sums, maskBefore.mask), 'g-o',label="VIIRS : Somme allumés")  
             
         ax2.plot(yearList, nbs, 'purple',label="Nombres de pixel allumées VIIR")
 

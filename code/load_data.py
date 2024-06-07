@@ -6,10 +6,12 @@ import argparse
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import cv2
 import rasterio.errors
+from utils import get_max
+
 
 class NTLSoftLoader():
 
-    def __init__(self, data, ntl_type):
+    def __init__(self, data, ntl_type="DMSP"):
 
         self.path_to_ntls = '../data'
         self.data = data #dodoma, Madagascar, south_mada, syria, dar_es_salam
@@ -17,7 +19,7 @@ class NTLSoftLoader():
         os.makedirs(self.path_to_vis, exist_ok=True)
         self.ntl_type = ntl_type
         self.shape = (None,)
-    
+        self.max=-1
     def getShape(self):
         return self.shape
     
@@ -111,8 +113,17 @@ class NTLSoftLoader():
         img[img < 0] = 0
 
         return img  
+    
+    def setMax(self):
+        self.max = get_max(self.data)
+    
+    def getMax(self):
+        if(self.max == -1):
+            self.setMax()
+            print("Pixel d'intensité max calculé :",self.max)
+        return self.max
 
-    def plot_optical_image(self, contrast, brightness, year,vmax=10**5):
+    def plot_optical_image(self, contrast, brightness, year):
 
         img = self.load_image(year)
         img = self.normalize(img, contrast=contrast, brightness=brightness)
@@ -121,7 +132,10 @@ class NTLSoftLoader():
             ntl_dmsp = self.load_one_ntl(year, ntl_type="DMSP")
             ntl_viirs = self.load_one_ntl(year, ntl_type="VIIRS")
         except(rasterio.errors.RasterioIOError):
-            print("Impossible de charger les ntls")
+            print("Impossible de charger les ntls",os.path.join(self.path_to_ntls,
+                                 self.data,
+                                "DMSP",
+                                 f'ntl_{year}.tif'))
             fig, ax0 = plt.subplots()
             ax0.imshow(img)
             plt.show()
@@ -134,7 +148,7 @@ class NTLSoftLoader():
 
         im1 = ax1.imshow(ntl_dmsp,vmin=0,vmax=64)
         ax1.set_title("DMSP")
-        im2 = ax2.imshow(ntl_viirs,vmin=0,vmax=vmax)
+        im2 = ax2.imshow(ntl_viirs,vmin=0,vmax=self.getMax())
         ax2.set_title("VIIRS")
         
         divider1 = make_axes_locatable(ax1)
@@ -173,23 +187,13 @@ if __name__ == '__main__':
     parser.add_argument("--data",
                         help="Data to use check in Optical_images")  
 
-    parser.add_argument("--ntl_type",
-                        help="ntl type. DMSP or VIIRS")
 
-    parser.add_argument("--vmax",
-                        "-m",
-                        type=int,
-                        default=10**5,
-                        help="ntl type. DMSP or VIIRS")
-
-
+    #from load_data_resized import NTLSoftLoaderResized
     args = parser.parse_args()
-    dataset = NTLSoftLoader(data=args.data,
-                            ntl_type=args.ntl_type)
-    max = args.vmax
+    dataset = NTLSoftLoader(data=args.data.lower())
     if(args.year):
-        dataset.plot_optical_image(args.contrast, args.brightness, args.year,max)
+        dataset.plot_optical_image(args.contrast, args.brightness, args.year)
     else :
         for year in range(2000,2021):
-            dataset.plot_optical_image(args.contrast, args.brightness, year,max)
+            dataset.plot_optical_image(args.contrast, args.brightness, year)
 
