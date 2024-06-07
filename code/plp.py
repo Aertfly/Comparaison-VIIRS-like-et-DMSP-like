@@ -4,7 +4,7 @@ import os
 import argparse
 import numpy as np
 import time
-
+import math
 
 def normalize(li):
     m = max(li)
@@ -18,6 +18,7 @@ class lit_pixel():
         self.pathToData = pth
         self.country = country
         self.out = out
+        self.floor = floor
 
     def fetchImg(self,year):
         imgPath = os.path.join(self.pathToData,
@@ -82,7 +83,7 @@ class lit_pixel():
                                  f'ntl_année.tif'))
         return  max(math.floor(pixel) for year in range(2000, 2021) for pixels in self.fetchImg(year) for pixel in pixels) + 1
 
-    def makeHistogram(self):
+    def makeHistogram(self,show):
         maximum = self.getMax()
         print("Intensité max :",maximum)
         repartition = [0]*maximum
@@ -103,22 +104,28 @@ class lit_pixel():
         plt.ylabel('Nombre de pixels')
         plt.title(f'Intensité des pixels {self.sat} - {self.country}')
         
-        plt.show()
+        if show :plt.show()
 
     
-    def saveFig(self,expe_path,out = ""):
+    def saveFig(self,end_dir,out = ""):
         if out == "": 
             out = self.out
         print("Lancement de la sauvegarde du graph ...")
-        expe_path = "./lit_pixel_analysis/" + self.country + "/" + self.sat
+        expe_path = os.path.join("../analysis",self.country,self.sat,"lit_pixel_analysis",end_dir)
         os.makedirs(expe_path, exist_ok=True)
         self.fig.savefig(expe_path + f'/{self.out}.png', bbox_inches='tight')
         self.fig.savefig(expe_path + f'/{self.out}.svg')
         print("Sauvegarde réussit !")
 
-    def __call__(self,show=True):
-        self.makeGraph(show)
-        self.saveFig()
+    def __call__(self,graphs=["g"],show=True):
+        for g in graphs:
+            match g:
+                case "g"|"graph"|"graphique":
+                    self.makeGraph(show)
+                    self.saveFig(str(self.floor))
+                case "h"|"hist"|"histogramme":
+                    self.makeHistogram(show)
+                    self.saveFig("histogram",out=f"histogramme_{self.country}_{self.sat}")
 
 class lit_pixel_resized(lit_pixel):
     def __init__(self,country,sat,floor=0,pth='../dataResized',out="lit_pixel_resized"):
@@ -184,18 +191,21 @@ if __name__ == '__main__':
     parser.add_argument("--noResize","-nr",action='store_true',help ="tell the prog to not use resized data")
     parser.add_argument("--noShow","-ns",action='store_false',help ="tell the end graph to not be shown")
     parser.add_argument("--combined","-c",action='store_true',help ="Combined VIIRS and DMSP on same graph")
+    parser.add_argument("--graph","-g",nargs='+',default=["g"],help="graphique à créer , ex: graph hist")
+    parser.add_argument("--floor","-f",type=int,default=0,help="palier à partir du quel ignorer les pixels")
     args = parser.parse_args()
     n = args.name.lower()
     t =  args.ntl_type.upper()
+    f = args.floor
     if args.combined :
         print("Combined : Génération d'un plot resized avec VIIRS et DMSP")
-        plot = combined(n,t)
+        plot = combined(n,t,f)
     elif args.noResize :
         print("noResize : Génération d'un plot avec des données normales")
-        plot =  lit_pixel(n,t)
+        plot =  lit_pixel(n,t,f)
     else :
         print("Génération d'un plot avec les données redimensionnées")
-        plot =  lit_pixel_resized(n,t)
+        plot =  lit_pixel_resized(n,t,f)
 
     print("Création du graph ...")
-    plot(args.noShow)
+    plot(show=args.noShow,graphs=args.graph)

@@ -9,7 +9,7 @@ class NTLSoftLoaderResized(NTLSoftLoader):
         self.path_to_ntls = '../dataResized'
     
     def load_ntls(self):
-        ntls = [self.load_one_ntl(2000)]
+        ntls = [self.load_one_ntl(2000,self.ntl_type)]
         shape = (len(ntls[0]),len(ntls[0][0]))
         for year in range(2001, 2021):
             ntl = self.load_one_ntl(year,self.ntl_type)

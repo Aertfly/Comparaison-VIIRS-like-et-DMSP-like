@@ -13,9 +13,10 @@ from utils import get_max_resized
 
 
 def create_heat_map_overlay(sat,country,year,bounds,vmax):
-    path = f'../analysis/{country}/visu/heatmap_{year}.png'
+    path = f'../analysis/{country}/visu'
     img_path = os.path.join("../data",country,sat,f"ntl_{year}.tif")
-
+    os.makedirs(path,exist_ok=True)
+    path +=f"/heatmap_{year}.png"
     with rasterio.open(img_path) as img:
         raster_data = img.read(1)
 
@@ -88,7 +89,7 @@ def vis(country):
 
     overlay_map(m,country,bounds)
     m.save(os.path.join("index.html"))
-    m.save(os.path.join("../analysis",country,"visu/index.html"))
+    #m.save(os.path.join("../analysis",country,"visu/index.html"))
     print("Map sauvegardée !")
 
 
