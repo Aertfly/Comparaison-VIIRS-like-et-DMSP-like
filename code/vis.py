@@ -126,10 +126,10 @@ def addJs(m,country,center,bounds):
     custom_js= """
 
     <div style="position: fixed; bottom: 50px; left: 50px; width: 200px; z-index: 9999;">
-        <label for="opacityRange">Opacité des calques:</label>
+        <label for="opacityRange">Opacité des calques</label>
         <input type="range" id="opacityRange" min="0" max="100" value="60" step="1" 
             oninput="updateOpacity(this.value)">
-        <label for="year">Year : <span id="yearValue" name="yearValue">2010</span></label>
+        <label for="year">Année : <span id="yearValue" name="yearValue">2010</span></label>
         <input type="range" id="year" name="year" default="2000" min="2000" max="2020" />
         
     </div>
@@ -174,6 +174,7 @@ def addJs(m,country,center,bounds):
                     this.removeCurrentOverlay();
                     let nextOverlay = this.imageOverlays[this.currentSat][year];
                     this.currentOverlay = nextOverlay ? nextOverlay.addTo(this.map) : null;
+                    updateOpacity(document.getElementById('opacityRange').value);
                 }
             },
 
