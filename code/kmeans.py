@@ -20,6 +20,7 @@ from matplotlib import patches
 
 from load_data_resized import NTLSoftLoaderResized
 from load_data import NTLSoftLoader
+from kneed import KneeLocator
 
 def norm_global(X):
     mean = X.mean(axis=0)
@@ -59,7 +60,7 @@ all_norm = {'global': norm_global,
 
 class Kmeans():
 
-    def __init__(self, n_clusters, ntimes=1, dist='euc', norm='local', dataset_name='test', path='', x_range=None, aois=None, mask=None):
+    def __init__(self, n_clusters=-1, ntimes=1, dist='euc', norm='local', dataset_name='test', path='', x_range=None, aois=None, mask=None):
         self.n_clusters = n_clusters
         self.ntimes = ntimes
 
@@ -72,6 +73,7 @@ class Kmeans():
         self.norm_name = norm
 
         # saving path
+        self.dataset_name = dataset_name
         self.src_path = path + f'../analysis/{dataset_name}/kmeans_analysis/'
         self.distance_matrix_path = self.src_path #+ f'{self.dist_name}/' + f'{self.norm_name}/'
         self.expe_path = self.distance_matrix_path + f'{self.n_clusters}/'
@@ -79,10 +81,34 @@ class Kmeans():
 
         # visualization
         self.x_range = x_range
-        colors = np.uint8((np.arange(0, self.n_clusters)/self.n_clusters)*255)
-        self.colors = plt.get_cmap('terrain')(colors)
         self.aois = aois
         self.mask = mask
+
+    def optimal_k(self, X,max_clusters=15):  
+        print("Nombre de cluster optimal en cours de recherche...")
+        inertias = []
+        K = range(1, max_clusters + 1)
+        
+        for k in K:
+            km = Kmeans(n_clusters=k, ntimes=10, dist=self.dist_name, norm=self.norm_name,
+                        dataset_name=self.dataset_name, x_range=self.x_range,
+                        aois=self.aois, mask=self.mask)
+            centroids, _, _ = km.kmeans_fit(X)
+            inertias.append(km.inertia(X, centroids, self.dist))
+        
+        kn = KneeLocator(K, inertias, curve='convex', direction='decreasing')
+        optimal_k = kn.knee
+
+        #plt.figure(figsize=(8, 6))
+        #plt.plot(K, inertias, 'bx-')
+        #plt.xlabel('k')
+        #plt.ylabel('Inertia')
+        #plt.title('Elbow Method showing the optimal k')
+        #plt.vlines(optimal_k, plt.ylim()[0], plt.ylim()[1], linestyles='dashed')
+        #plt.show()
+        
+        return optimal_k
+
 
     def kmeans_plusplus(self, X, n_clusters, dist):
         index = np.random.randint(0, X.shape[0])
@@ -366,7 +392,7 @@ class Kmeans():
         return self.fig
 
     def vis(self, X_vis, preds, shape, df_scores, refc=None, show = True):
-
+        print("Optimal trouvé",self.n_clusters)
         # gridspec inside gridspec
         self.fig = plt.figure(
             figsize=set_size(width=tex_witdh_in_pt, 
@@ -377,7 +403,7 @@ class Kmeans():
 
 
         self.main_grid = gridspec.GridSpec(1, 2, figure=self.fig)
-
+        print("Optimal trouvé",self.n_clusters)
         subfig = self.plot_kmeans_label(X_vis, preds, refc)
 
         subfig = self.make_cluster_map(preds, shape, df_scores=df_scores)
@@ -403,6 +429,11 @@ class Kmeans():
         tic = time.time()
 
         X, mean = self.norm(X_raw)
+        if self.n_clusters == -1 :
+            self.n_clusters = self.optimal_k(X)
+        colors = np.uint8((np.arange(0, self.n_clusters)/self.n_clusters)*255)
+        self.colors = plt.get_cmap('terrain')(colors)
+        print("Optimal trouvé",self.n_clusters)
         if self.dist_name == 'dtw':
             self.centroid, preds = self.kmeans_fit_dtw(X, self.n_clusters, ntimes=self.ntimes)
         else:
@@ -424,7 +455,7 @@ class Kmeans():
         print('Inertia : ', self.inertia(X, self.centroid, self.dist))
         print('Average Silhouette score : ', global_sil_scores.mean())
         print('Averaged per Class Silhouette Score : ', df_scores['mean'].mean())
-
+        print("Optimal trouvé",self.n_clusters)
         self.vis(X, preds, shape, df_scores=df_scores, refc=refc,show=show)
 
         print('Ending at ', str(datetime.datetime.now()))
@@ -433,7 +464,7 @@ class Kmeans():
 
         return self.centroid, df_scores
     
-def main_kmeans(name,ntl_type="DMSP",clusters=[5],show=False,resize=False):
+def main_kmeans(name,ntl_type="DMSP",clusters=[-1],show=False,resize=False):
     print("Paramétre passé à kmeans",
           "name",name,
           "ntl",ntl_type,
@@ -478,7 +509,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--name","-n", help="dataset name to use")
     parser.add_argument("--ntl_type","-t", help="dataset type to use")
-    parser.add_argument("-c","--clusters",nargs='+',default=["5"],help="List of cluster ")
+    parser.add_argument("-c","--clusters",nargs='+',default=["-1"],help="List of cluster ")
     parser.add_argument("--noResize","-nr",action='store_true',help ="tell the prog to not use resized data")
     parser.add_argument("--noShow","-ns",action='store_true',help ="tell the end graph to not be shown")
     args = parser.parse_args()
