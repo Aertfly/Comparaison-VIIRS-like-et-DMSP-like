@@ -111,7 +111,7 @@ def overlay_map(m,country,bounds):
                 create_heat_map(sat,country,year,path,vmax)
         print(f"Création de l'overlay de l'algo kmeans pour {sat}")
         create_kmeans_overlay(sat,country,7,bounds).add_to(m)
-        folium.FeatureGroup(name=f"{sat}",show=False).add_to(m)
+        folium.FeatureGroup(name=f"heatmap {sat}",show=False).add_to(m)
     
     #TO DO ajouter legend heat map
     #legend = folium.map.CustomPane('image_legends', z_index=650)
@@ -164,7 +164,7 @@ def addJs(m,country,center,bounds):
                             {opacity: 0.6}
                         );
                     }
-                    this.imageOverlays[sat] = temp;
+                    this.imageOverlays["heatmap "+sat] = temp;
                 }
                 this.setListener()
             },
@@ -182,6 +182,7 @@ def addJs(m,country,center,bounds):
             },
 
             setListener() {
+            console.log("BRUH")
                 $('#year').on('input', function() {
                     heatmap.updateMap($(this).val());
                     span = document.getElementById("yearValue");
@@ -190,19 +191,22 @@ def addJs(m,country,center,bounds):
                 });
 
                 var checkboxes = document.getElementsByClassName('leaflet-control-layers-selector');
+                var li_sat = ["heatmap DMSP","heatmap VIIRS"]
                 for (var i = 0; i < checkboxes.length; i++) {
-                    checkboxes[i].addEventListener('change', function() {
-                        innerText = this.nextSibling.textContent.trim();
-                        if (this.checked) {
-                            heatmap.currentSat = innerText;
-                            heatmap.updateMap($('#year').val());
-                        } else {
-                            if(heatmap.currentSat == innerText){
-                                heatmap.removeCurrentOverlay();
-                                heatmap.currentSat = null
+                    if(li_sat.includes(checkboxes[i].nextSibling.textContent.trim())){
+                        checkboxes[i].addEventListener('change', function() {
+                            innerText = this.nextSibling.textContent.trim();
+                            if (this.checked) {
+                                heatmap.currentSat = innerText;
+                                heatmap.updateMap($('#year').val());
+                            } else {
+                                if(heatmap.currentSat == innerText){
+                                    heatmap.removeCurrentOverlay();
+                                    heatmap.currentSat = null
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         };
