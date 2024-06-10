@@ -7,3 +7,5 @@
 .npy
 /analysis
 /code/index.html
+code/index.html
+*.html
