@@ -67,7 +67,7 @@ class map_vis():
             </html>
             """
             folium.Marker(
-                [bounds[0][0], bounds[0][1]+0.1*i], 
+                [bounds[0][0], bounds[i][1]], 
                 popup=folium.Popup(html_content, max_width=1400),
                 icon=folium.Icon(color=colors[i], icon='info-sign')
             ).add_to(grp_country)
@@ -75,7 +75,7 @@ class map_vis():
         folium.Marker(
             [bounds[1][0], bounds[1][1]], 
             popup='Bottom Right'
-        )
+        ).add_to(grp_country)
 
         grp_country.add_to(m)
         return """
