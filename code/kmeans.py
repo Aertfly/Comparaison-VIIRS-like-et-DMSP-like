@@ -392,7 +392,7 @@ class Kmeans():
         return self.fig
 
     def vis(self, X_vis, preds, shape, df_scores, refc=None, show = True):
-        print("Optimal trouvé",self.n_clusters)
+
         # gridspec inside gridspec
         self.fig = plt.figure(
             figsize=set_size(width=tex_witdh_in_pt, 
@@ -403,7 +403,7 @@ class Kmeans():
 
 
         self.main_grid = gridspec.GridSpec(1, 2, figure=self.fig)
-        print("Optimal trouvé",self.n_clusters)
+ 
         subfig = self.plot_kmeans_label(X_vis, preds, refc)
 
         subfig = self.make_cluster_map(preds, shape, df_scores=df_scores)
@@ -433,7 +433,7 @@ class Kmeans():
             self.n_clusters = self.optimal_k(X)
         colors = np.uint8((np.arange(0, self.n_clusters)/self.n_clusters)*255)
         self.colors = plt.get_cmap('terrain')(colors)
-        print("Optimal trouvé",self.n_clusters)
+ 
         if self.dist_name == 'dtw':
             self.centroid, preds = self.kmeans_fit_dtw(X, self.n_clusters, ntimes=self.ntimes)
         else:
@@ -455,7 +455,7 @@ class Kmeans():
         print('Inertia : ', self.inertia(X, self.centroid, self.dist))
         print('Average Silhouette score : ', global_sil_scores.mean())
         print('Averaged per Class Silhouette Score : ', df_scores['mean'].mean())
-        print("Optimal trouvé",self.n_clusters)
+ 
         self.vis(X, preds, shape, df_scores=df_scores, refc=refc,show=show)
 
         print('Ending at ', str(datetime.datetime.now()))
