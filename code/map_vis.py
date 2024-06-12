@@ -20,7 +20,7 @@ class map_vis():
     def __call__(self,countries):
         m = folium.Map(location=[0, 0], 
                     zoom_start=5,
-                    #tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+                    tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
                     attr='OpenStreetMap France',
                     world_copy_jump=True
                 )
