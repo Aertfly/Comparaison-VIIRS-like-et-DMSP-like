@@ -13,11 +13,14 @@ from PIL import Image
 
 
 class map_vis():
-    def __init__(self,first_year = 2000, last_year=2021):
+    def __init__(self,countries,first_year = 2000, last_year=2021):
         self.first_year = first_year
         self.last_year = last_year
+        self.countries = []
+        for c in countries:
+            self.countries.append(country(c))
 
-    def __call__(self,countries):
+    def __call__(self):
         m = folium.Map(location=[0, 0], 
                     zoom_start=5,
                     tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
@@ -25,113 +28,13 @@ class map_vis():
                     world_copy_jump=True
                 )
         initJs= """const handler  = new overlayHandler("""+m.get_name()+""")"""
-        for country in countries :
-            initJs += self.add_country(m,country)
+        for country in self.countries :
+            country(m)
+            initJs += country.get_init_js()
         self.add_custom_script(m,initJs)
         folium.LayerControl().add_to(m)
         m.save(os.path.join("index.html"))
         print("Map sauvegardée !")
-
-    def add_country(self,m,country):
-        print("Lancement de la création de la carte pour",country)
-        raster_path = os.path.join("../data", country, "DMSP", "ntl_2000.tif")
-        with rasterio.open(raster_path) as dataset:
-            width = dataset.width
-            height = dataset.height
-            transform = dataset.transform
-
-        #transformation de mercator 
-        top_left_coords = rasterio.transform.xy(transform, 0, 0)
-        bottom_right_coords = rasterio.transform.xy(transform, height - 1, width - 1)
-        bounds=[[top_left_coords[1], top_left_coords[0]], [bottom_right_coords[1], bottom_right_coords[0]]]
-
-
-
-
-        clusters = 5
-        self.pre_generate_overlays(country,clusters)
-
-        grp_country = folium.FeatureGroup(name=f"{country}",show=False)
-        li_sat = ["DMSP","VIIRS"]
-        colors = ['red','green']
-        i=0
-        for sat in li_sat:
-            html_content = """
-            <!DOCTYPE html>
-            <html>
-                <body>
-                    <p>"""+sat+"""</p>
-                    <img src="../analysis/"""+country+"""/"""+sat+"""/kmeans_analysis/"""+str(clusters)+"""/clusters_"""+str(clusters)+""".png" 
-                    alt="Image" width="700" height="150">
-                </body>
-            </html>
-            """
-            folium.Marker(
-                [bounds[0][0], bounds[i][1]], 
-                popup=folium.Popup(html_content, max_width=1400),
-                icon=folium.Icon(color=colors[i], icon='info-sign')
-            ).add_to(grp_country)
-            i+=1
-        folium.Marker(
-            [bounds[1][0], bounds[1][1]], 
-            popup='Bottom Right'
-        ).add_to(grp_country)
-
-        grp_country.add_to(m)
-        return """
-        handler.addOverlay("""+str(self.first_year)+""","""+str(self.last_year)+""",'"""+country+"""',"""+str(5)+""","""+str(bounds)+""")"""
-
-    def create_lightmaps(self,country,sat):
-        vmax = -1
-        for year in range(self.first_year,self.last_year):
-            path = f'../analysis/{country}/{sat}/lightmap'
-            os.makedirs(path,exist_ok=True)
-            path +=f"/lightmap_{year}_{sat}.png"
-            if not os.path.exists(path):
-                print(f"Création de la heat map pour {sat} de {year}")
-                if vmax == -1 :
-                    if sat =="DMSP":
-                        vmax= 64
-                    else:
-                        vmax= get_max_resized(country)
-                self.create_lightmap(sat,country,year,path,vmax)
-
-    def create_lightmap(self,sat,country,year,path,vmax):
-        img_path = os.path.join("../data",country,sat,f"ntl_{year}.tif")
-        with rasterio.open(img_path) as img:
-            raster_data = img.read(1)
-
-        norm = Normalize(vmin=0, vmax=vmax)
-        lightmap_data = viridis(norm(raster_data))
-
-        lightmap_image = (lightmap_data[:, :, :3] * 255).astype(np.uint8)
-        lightmap_pil = Image.fromarray(lightmap_image)
-        lightmap_pil.save(path)
-
-    def create_kmeans(self,sat,country,cluster):
-        image= os.path.join("../analysis",country,sat,"kmeans_analysis",str(cluster),f"cluster_img_{cluster}.png")
-        if not os.path.exists(image):
-            print("Kmeans non trouvé, création de l'image...",image)
-            params = {
-                'ntl_type': sat,
-                'resize': True,
-                'show': False,
-                'clusters': [cluster]
-            }
-            main_kmeans(country, **params)
-            print("Image créée, reprise de la suite")
-
-    def pre_generate_overlays(self,country,clusters):
-        li_sat = ["DMSP","VIIRS"]
-        for sat in li_sat:
-            self.create_lightmaps(country,sat)
-            self.create_kmeans(sat,country,clusters)
-        
-        #TO DO ajouter legend heat map
-        #legend = folium.map.CustomPane('image_legends', z_index=650)
-        #legend.add_to(m)
-        
-
 
     def add_custom_script(self,m,jsCountriesInit):
         custom_js= """
@@ -174,20 +77,128 @@ class map_vis():
         </script>"""
         m.get_root().html.add_child(folium.Element(custom_js))
 
+
+
+class country():
+    def __init__(self,name,cluster=5):
+        raster_path = os.path.join("../data", name, "DMSP", "ntl_2000.tif")
+        with rasterio.open(raster_path) as dataset:
+            width = dataset.width
+            height = dataset.height
+            transform = dataset.transform
+        #transformation de mercator 
+        top_left_coords = rasterio.transform.xy(transform, 0, 0)
+        bottom_right_coords = rasterio.transform.xy(transform, height - 1, width - 1)
+
+        self.first_year = 2000
+        self.last_year = 2021
+        self.name = name
+        self.cluster = cluster
+        self.bounds = [[top_left_coords[1], top_left_coords[0]], [bottom_right_coords[1], bottom_right_coords[0]]]
+
+    def __call__(self,m):
+        print("Ajout à la carte de",self.name)
+        li_sat = ["DMSP","VIIRS"]
+        self.pre_generate_overlays(li_sat)
+        self.generate_grp(li_sat).add_to(m)
+
+    def pre_generate_overlays(self,li_sat):
+        for sat in li_sat:
+            self.pre_generate_kmeans(sat)
+            self.pre_generate_lightmaps(sat)
+
+    def pre_generate_kmeans(self,sat):
+        path = os.path.join("../analysis",self.name,sat,"kmeans_analysis",
+                            str(self.cluster),f"cluster_img_{self.cluster}.png")
+        if not os.path.exists(path):
+            print("Kmeans non trouvé, création de l'image...",path)
+            params = {
+                'ntl_type': sat,
+                'resize': True,
+                'show': False,
+                'clusters': [self.cluster]
+            }
+            main_kmeans(self.name, **params)
+            print("Image créée, reprise de la suite")
+
+    def pre_generate_lightmaps(self,sat):
+        vmax = -1
+        path = f'../analysis/{self.name}/{sat}/lightmap'
+        os.makedirs(path,exist_ok=True)
+        for year in range(self.first_year,self.last_year):
+            temp_path = path + f"/lightmap_{year}_{sat}.png"
+            if not os.path.exists(temp_path):
+                print(f"Création de la lightmap pour {sat} de {year}")
+                if vmax == -1 :
+                    if sat =="DMSP":
+                        vmax= 64
+                    else:
+                        vmax= get_max_resized(self.name)
+                self.generate_lightmap(sat,year,temp_path,vmax)
+
+    def generate_lightmap(self,sat,year,path,vmax):
+        img_path = os.path.join("../data",self.name,sat,f"ntl_{year}.tif")
+        with rasterio.open(img_path) as img:
+            raster_data = img.read(1)
+        #raster_data = np.load(img_path)
+        norm = Normalize(vmin=0, vmax=vmax)
+        lightmap_data = viridis(norm(raster_data))
+
+        lightmap_image = (lightmap_data[:, :, :3] * 255).astype(np.uint8)
+        lightmap_pil = Image.fromarray(lightmap_image)
+        lightmap_pil.save(path)
     
+    def generate_grp(self,li_sat):
+        grp_country = folium.FeatureGroup(name=f"{self.name}",show=False)
+        colors = ['red','green']
+        i=0
+        for sat in li_sat:
+            html_content = """
+            <!DOCTYPE html>
+            <html>
+                <body>
+                    <p>"""+sat+"""</p>
+                    <img src="../analysis/"""+self.name+"""/"""+sat+"""/kmeans_analysis/"""+str(self.cluster)+"""/clusters_"""+str(self.cluster)+""".png" 
+                    alt="Image" width="700" height="150">
+                </body>
+            </html>
+            """
+            folium.Marker(
+                [self.bounds[0][0], self.bounds[i][1]], 
+                popup=folium.Popup(html_content, max_width=1400),
+                icon=folium.Icon(color=colors[i], icon='info-sign')
+            ).add_to(grp_country)
+            i+=1
+        folium.Marker(
+            [self.bounds[1][0], self.bounds[1][1]], 
+            popup='Bottom Right'
+        ).add_to(grp_country)
+        folium.Marker(
+            [self.bounds[1][0], self.bounds[0][1]], 
+            popup='Bottom Left'
+        ).add_to(grp_country)
+        return grp_country
+
+    def get_init_js(self):
+        return """
+        handler.addOverlay("""+str(self.first_year)+""","""+str(self.last_year)+""",'"""+self.name+"""',"""+str(self.cluster)+""","""+str(self.bounds)+""")"""
+
+
+
 if __name__ == "__main__":  
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--name", help="Nom de la zone d'étude")
     parser.add_argument("-a", "--all",action='store_true', help="Prend toute les zones d'étude")
     args = parser.parse_args() 
 
-    main = map_vis()
+    
     if args.all:
         temp = []
         with os.scandir("../data") as files:
             for file in files:
                 if(file.is_dir()):
                     temp.append(file.name)
-        main(temp)
     else:
-        main([args.name])
+        temp = [args.name]
+    main = map_vis(temp)
+    main()
