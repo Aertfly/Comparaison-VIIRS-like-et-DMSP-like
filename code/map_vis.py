@@ -12,10 +12,12 @@ from plp import combined
 from PIL import Image
 
 class map_vis():
-    def __init__(self,countries):
+    def __init__(self,countries, first_year=2000, last_year=2020):
         self.countries = []
         for c in countries:
-            self.countries.append(country(c))
+            self.countries.append(country(c, first_year=first_year, last_year=last_year))
+        self.first_year=first_year
+        self.last_year=last_year
 
     def __call__(self):
         m = folium.Map(location=[0, 0], 
@@ -41,7 +43,7 @@ class map_vis():
                 oninput="updateOpacity(this.value)"></label>
             <label for="year">Année : <span id="yearValue" name="yearValue">2010</span>
             <br/>
-            <input type="range" id="year" name="year" default="2000" min="2000" max="2020" />
+            <input type="range" id="year" name="year" default=\""""+str(self.first_year)+"""" min=\""""+str(self.first_year)+"""" max=\""""+str(self.last_year)+"""" />
             </label>
             <br/>
             <label for="DMSP">DMSP
@@ -73,7 +75,7 @@ class map_vis():
         m.get_root().html.add_child(folium.Element(custom_js))
 
 class country():
-    def __init__(self,name,cluster=5,floor=30):
+    def __init__(self,name,cluster=5,floor=30, first_year=2000, last_year=2020):
         raster_path = os.path.join("../data", name, "DMSP", "ntl_2000.tif")
         with rasterio.open(raster_path) as dataset:
             width = dataset.width
@@ -82,8 +84,8 @@ class country():
         #transformation de mercator 
         top_left_coords = rasterio.transform.xy(transform, 0, 0)
         bottom_right_coords = rasterio.transform.xy(transform, height - 1, width - 1)
-        self.first_year = 2000
-        self.last_year = 2021
+        self.first_year = first_year
+        self.last_year = last_year+1
         self.name = name
         self.floor = floor
         self.cluster = cluster
@@ -112,7 +114,7 @@ class country():
                 'show': False,
                 'clusters': [self.cluster]
             }
-            main_kmeans(self.name, **params)
+            main_kmeans(self.name, **params, first_year=self.first_year, last_year=self.last_year)
             print("Image créée, reprise de la suite")
 
     def pre_generate_plp(self):
@@ -223,5 +225,5 @@ if __name__ == "__main__":
                     temp.append(file.name)
     else:
         temp = args.name
-    main = map_vis(temp)
+    main = map_vis(temp, first_year=2013, last_year=2020)
     main()
