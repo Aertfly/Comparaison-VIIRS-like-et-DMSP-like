@@ -60,7 +60,7 @@ all_norm = {'global': norm_global,
 
 class Kmeans():
 
-    def __init__(self, n_clusters=-1, ntimes=1, dist='euc', norm='local', dataset_name='test', path='', x_range=None, aois=None, mask=None):
+    def __init__(self, n_clusters=-1, ntimes=1, dist='euc', norm='local',ntl="DMSP", dataset_name='test', path='', x_range=None, aois=None, mask=None):
         self.n_clusters = n_clusters
         self.ntimes = ntimes
 
@@ -74,7 +74,7 @@ class Kmeans():
 
         # saving path
         self.dataset_name = dataset_name
-        self.src_path = path + f'../analysis/{dataset_name}/kmeans_analysis/'
+        self.src_path = path + f'../analysis/{dataset_name}/kmeans_analysis/{ntl}/'
         self.distance_matrix_path = self.src_path #+ f'{self.dist_name}/' + f'{self.norm_name}/'
         self.expe_path = self.distance_matrix_path + f'{self.n_clusters}/'
         os.makedirs(self.expe_path, exist_ok=True)
@@ -345,7 +345,7 @@ class Kmeans():
         return fig
 
     def make_cluster_map(self, preds, shape, df_scores):
-
+        print("SHAPE",shape)   
         gs01 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=self.main_grid[1])
 
         ax = self.fig.add_subplot(gs01[0])
@@ -386,7 +386,7 @@ class Kmeans():
 
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-            
+          
         plt.imsave(self.expe_path + f'cluster_img_{self.n_clusters}.png', img)
         plt.imsave(self.expe_path + f'cluster_img_{self.n_clusters}.svg', img)
         return self.fig
@@ -466,11 +466,11 @@ class Kmeans():
     
 def main_kmeans(name,ntl_type="DMSP",clusters=[-1],show=False,resize=False):
     print("Paramétre passé à kmeans",
-          "name",name,
-          "ntl",ntl_type,
-          "clusters",clusters,
-          "show",show,
-          "resize",resize
+          "|name :",name,
+          "|ntl :",ntl_type,
+          "|clusters :",clusters,
+          "|show :",show,
+          "|resize :",resize
     )
     n = name.lower()
     t =  ntl_type.upper()
@@ -495,7 +495,8 @@ def main_kmeans(name,ntl_type="DMSP",clusters=[-1],show=False,resize=False):
                       'ntimes': 10,
                       'dist': 'euc',
                       'norm': norm,
-                      'dataset_name': name + '/' + ntl_type,
+                      'ntl' : ntl_type,
+                      'dataset_name': name,
                       'x_range': range(2000, 2021)}
 
             km = Kmeans(**params)

@@ -21,6 +21,7 @@ class NTLSoftLoader():
         self.shape = (None,)
         self.max=-1
     def getShape(self):
+        print(self.shape)
         return self.shape
     
     def load_ntls(self):

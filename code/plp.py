@@ -105,16 +105,19 @@ class lit_pixel():
         plt.title(f'Intensité des pixels {self.sat} - {self.country}')
         
         if show :plt.show()
+        self.saveFig("histogramme",out=f"histogramme_{self.country}_{self.sat}")
 
+    def get_expe_path(self,end_dir):
+        return  os.path.join("../analysis",self.country,"lit_pixel_analysis",self.sat,end_dir)
     
     def saveFig(self,end_dir,out = ""):
         if out == "": 
             out = self.out
         print("Lancement de la sauvegarde du graph ...")
-        expe_path = os.path.join("../analysis",self.country,self.sat,"lit_pixel_analysis",end_dir)
+        expe_path = self.get_expe_path(end_dir)
         os.makedirs(expe_path, exist_ok=True)
-        self.fig.savefig(expe_path + f'/{self.out}.png', bbox_inches='tight')
-        self.fig.savefig(expe_path + f'/{self.out}.svg')
+        self.fig.savefig(expe_path + f'/{out}.png', bbox_inches='tight')
+        self.fig.savefig(expe_path + f'/{out}.svg')
         print("Sauvegarde réussit !")
 
     def __call__(self,graphs=["g"],show=True):
@@ -125,7 +128,7 @@ class lit_pixel():
                     self.saveFig(str(self.floor))
                 case "h"|"hist"|"histogramme":
                     self.makeHistogram(show)
-                    self.saveFig("histogram",out=f"histogramme_{self.country}_{self.sat}")
+                    
 
 class lit_pixel_resized(lit_pixel):
     def __init__(self,country,sat,floor=0,pth='../dataResized',out="lit_pixel_resized"):
@@ -140,8 +143,14 @@ class lit_pixel_resized(lit_pixel):
     
     
 class combined(lit_pixel_resized):
-    def __init__(self, country, sat, pth='../dataResized', out="lit_pixel_combined"):
-        super().__init__(country, sat, pth, out)
+    def __init__(self, country,sat="DMSP",floor=0 , pth='../dataResized', out="lit_pixel_combined"):
+        super().__init__(country, sat, floor, pth, out)
+
+    def makeHistogram(self, show):
+        li_sat = ["DMSP","VIIRS"]
+        for sat in li_sat:
+            self.sat = sat
+            super().makeHistogram(show)
 
     def makeGraph(self,show):
         yearList = [x for x in range(2000,2021)]
@@ -156,8 +165,7 @@ class combined(lit_pixel_resized):
         ax1.plot(maskBefore, np.ma.masked_array(sums, maskBefore.mask), 'b--o')  
 
         ax1.set_xlabel('Années')
-        ax2.set_ylabel('', color='r')
-
+        
         tickYears = yearList[::5]
         ax1.set_xticks(tickYears)
         ax1.set_xticklabels(tickYears)
@@ -165,7 +173,6 @@ class combined(lit_pixel_resized):
         ax2 = ax1.twinx()
         ax2.plot(yearList, nbs, 'r-',label="Nombres de pixel allumées DMSP")
         ax2.set_ylabel('', color='r')
-
 
         self.sat = "VIIRS"
         print("--- LANCEMENT CALCUL VIIRS ---")
@@ -175,13 +182,12 @@ class combined(lit_pixel_resized):
             
         ax2.plot(yearList, nbs, 'purple',label="Nombres de pixel allumées VIIR")
 
-        fig.legend(loc="upper right", bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)
-        self.fig = fig
-
-        plt.title(f"{self.sat} NTL - {self.country}")
-
-        
+        fig.legend(loc="lower right")
+        self.fig = fig        
         if show : plt.show()
+    
+    def get_expe_path(self,end_dir):
+        return  os.path.join("../analysis",self.country,"lit_pixel_analysis","DMSP_et_VIIRS",end_dir)
     
 
 if __name__ == '__main__':
@@ -196,7 +202,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     n = args.name.lower()
     t =  args.ntl_type.upper()
-    f = args.floor
+    f = int(args.floor)
     if args.combined :
         print("Combined : Génération d'un plot resized avec VIIRS et DMSP")
         plot = combined(n,t,f)

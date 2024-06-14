@@ -1,13 +1,21 @@
 from load_data import NTLSoftLoader 
 import numpy as np
+import rasterio
 import os
 from utils import get_max_resized
+
+
+"""    def getShape(self):
+        path = os.path.join("../data",self.data,self.data+"_2000.tif")
+        with rasterio.open(path) as img:
+            return img.shape"""
+
 
 class NTLSoftLoaderResized(NTLSoftLoader):
     def __init__(self, data, ntl_type="DMSP"):
         super().__init__(data, ntl_type)
         self.path_to_ntls = '../dataResized'
-    
+
     def load_ntls(self):    
         ntls = [self.load_one_ntl(2000,self.ntl_type)]
         shape = (len(ntls[0]),len(ntls[0][0]))

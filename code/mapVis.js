@@ -127,18 +127,19 @@ class overlayHandler{
             
             const sats = ["DMSP", "VIIRS"];
             for (let sat of sats) {
-                path = "../analysis/" + country + "/" + sat;
+                path = "../analysis/" + country;
                 let temp = {}
                 for (let i = first_year; i < last_year; i++) {
                     let n = "/lightmap_" + i + "_" + sat + ".png";
-                    temp[i] = L.imageOverlay(path + '/lightmap/' + n,
+                    temp[i] = L.imageOverlay(path + '/lightmap/' + sat + "/" + n,
                         [[bot_map[0], top_map[1]], [top_map[0], bot_map[1]]],
                         {opacity: 0.6}
-                    );
+                    );  
                 }
+                console.log("BOUNDS",[[bot_map[0], top_map[1]], [top_map[0], bot_map[1]]])
                 this.imageOverlays["lightmap"][sat] = temp;
                 this.imageOverlays["kmeans"][sat] = L.imageOverlay(
-                    path  + "/kmeans_analysis/" + clusters + "/cluster_img_"+clusters +".png",
+                    path  + "/kmeans_analysis/"+ sat + "/" + clusters + "/cluster_img_"+clusters +".png",
                     [[bot_map[0], top_map[1]], [top_map[0], bot_map[1]]],
                     {opacity: 0.6}
                 );
