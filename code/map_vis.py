@@ -210,7 +210,7 @@ class country():
 
 if __name__ == "__main__":  
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--name", help="Nom de la zone d'étude")
+    parser.add_argument("-n", "--name",nargs='+', help="Nom de la zone d'étude")
     parser.add_argument("-a", "--all",action='store_true', help="Prend toute les zones d'étude")
     args = parser.parse_args() 
 
@@ -222,6 +222,6 @@ if __name__ == "__main__":
                 if(file.is_dir()):
                     temp.append(file.name)
     else:
-        temp = [args.name]
+        temp = args.name
     main = map_vis(temp)
     main()
