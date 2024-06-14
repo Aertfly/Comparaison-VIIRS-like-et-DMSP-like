@@ -92,21 +92,17 @@ class country():
 
     def __call__(self,m,first_year,last_year):
         print("Ajout à la carte de",self.name)
-        self.first_year = first_year
-        self.last_year = last_year
         li_sat = ["DMSP","VIIRS"]
-        self.pre_generate_overlays(li_sat)
+        self.pre_generate_overlays(li_sat,first_year,last_year)
         self.generate_grp(li_sat).add_to(m)
-        self.first_year = None
-        self.last_year = None
 
-    def pre_generate_overlays(self,li_sat):
+    def pre_generate_overlays(self,li_sat,first_year,last_year):
         for sat in li_sat:
-            self.pre_generate_kmeans(sat)
-            self.pre_generate_ntl_intensities(sat)
-        self.pre_generate_plp()
+            self.pre_generate_kmeans(sat,first_year,last_year)
+            self.pre_generate_ntl_intensities(sat,first_year,last_year)
+        self.pre_generate_plp(first_year,last_year)
 
-    def pre_generate_kmeans(self,sat):
+    def pre_generate_kmeans(self,sat,first_year,last_year):
         path = os.path.join("../analysis",self.name,"kmeans_analysis",sat,
                             str(self.cluster),f"cluster_img_{self.cluster}.svg")
         if not os.path.exists(path) or ("kmeans" in self.force):
@@ -117,23 +113,23 @@ class country():
                 'show': False,
                 'clusters': [self.cluster]
             }
-            main_kmeans(self.name, **params, first_year=self.first_year, last_year=self.last_year)
+            main_kmeans(self.name, **params, first_year=first_year, last_year=last_year)
             print("Image créée, reprise de la suite")
 
-    def pre_generate_plp(self):
+    def pre_generate_plp(self,first_year,last_year):
         path = os.path.join("../analysis",self.name,"lit_pixel_analysis","DMSP_et_VIIRS",
                             str(self.floor),"lit_pixel_combined.png")
                             
         if not os.path.exists(path) or ("plp" in self.force) :
             print("Graph non trouvé, lancement de sa création")
-            plp = combined(self.name,floor= self.floor)
+            plp = combined(self.name,floor= self.floor , first_year=first_year, last_year=last_year)
             plp(show=False,graphs=['g','h'])
 
-    def pre_generate_ntl_intensities(self,sat):
+    def pre_generate_ntl_intensities(self,sat,first_year,last_year):
         vmax = -1
         path = f'../analysis/{self.name}/ntl_intensity/{sat}'
         os.makedirs(path,exist_ok=True)
-        for year in range(self.first_year,self.last_year):
+        for year in range(first_year,last_year):
             temp_path = path + f"/ntl_intensity_{year}_{sat}.png"
             if not os.path.exists(temp_path) or ("ntl_intensity" in self.force):
                 print(f"{self.name} : Création de l'image des intensité nocturnes pour {sat} de {year}")
