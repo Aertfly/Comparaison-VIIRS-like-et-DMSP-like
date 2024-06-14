@@ -119,7 +119,7 @@ class overlayHandler{
     }
     
     class overlay{
-        imageOverlays = {"lightmap":{},"kmeans":{}};
+        imageOverlays = {"ntl_intensity":{},"kmeans":{}};
         currentOverlay = null;
         
         constructor(first_year,last_year,country,clusters,top_map,bot_map) {
@@ -130,14 +130,14 @@ class overlayHandler{
                 path = "../analysis/" + country;
                 let temp = {}
                 for (let i = first_year; i < last_year; i++) {
-                    let n = "/lightmap_" + i + "_" + sat + ".png";
-                    temp[i] = L.imageOverlay(path + '/lightmap/' + sat + "/" + n,
+                    let n = "/ntl_intensity_" + i + "_" + sat + ".png";
+                    temp[i] = L.imageOverlay(path + '/ntl_intensity/' + sat + "/" + n,
                         [[bot_map[0], top_map[1]], [top_map[0], bot_map[1]]],
                         {opacity: 0.6}
                     );  
                 }
                 console.log("BOUNDS",[[bot_map[0], top_map[1]], [top_map[0], bot_map[1]]])
-                this.imageOverlays["lightmap"][sat] = temp;
+                this.imageOverlays["ntl_intensity"][sat] = temp;
                 this.imageOverlays["kmeans"][sat] = L.imageOverlay(
                     path  + "/kmeans_analysis/"+ sat + "/" + clusters + "/cluster_img_"+clusters +".png",
                     [[bot_map[0], top_map[1]], [top_map[0], bot_map[1]]],
@@ -149,7 +149,7 @@ class overlayHandler{
         updateMap(map,visType,currentSat,year) {
             this.removeCurrentOverlay(map);
             let nextOverlay =  this.imageOverlays[visType][currentSat];
-            if (visType == "lightmap") nextOverlay = nextOverlay[year]
+            if (visType == "ntl_intensity") nextOverlay = nextOverlay[year]
             this.currentOverlay = nextOverlay ? nextOverlay.addTo(map) : null;
             updateOpacity(document.getElementById('opacityRange').value);
         }

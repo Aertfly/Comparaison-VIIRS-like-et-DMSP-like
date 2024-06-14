@@ -20,6 +20,15 @@ class lit_pixel():
         self.out = out
         self.floor = floor
 
+
+        # Définir la taille de police par défaut pour tous les éléments
+        plt.rc('font', size=14)           # taille de la police par défaut pour le texte
+        plt.rc('axes', labelsize=15)      # taille de la police pour les labels des axes
+        plt.rc('xtick', labelsize=12)     # taille de la police pour les ticks de l'axe X
+        plt.rc('ytick', labelsize=12)     # taille de la police pour les ticks de l'axe Y
+        plt.rc('legend', fontsize=10)     # taille de la police pour la légende
+        plt.rc('figure', titlesize=18)    # taille de la police pour les titres des figures
+
     def fetchImg(self,year):
         imgPath = os.path.join(self.pathToData,
                                  self.country,
@@ -75,6 +84,7 @@ class lit_pixel():
 
         self.fig = fig
         if show : plt.show()
+        
 
     def getMax(self):
         print(os.path.join(self.pathToData,
@@ -106,7 +116,7 @@ class lit_pixel():
         
         if show :plt.show()
         self.saveFig("histogramme",out=f"histogramme_{self.country}_{self.sat}")
-
+        plt.close()
     def get_expe_path(self,end_dir):
         return  os.path.join("../analysis",self.country,"lit_pixel_analysis",self.sat,end_dir)
     
@@ -118,7 +128,7 @@ class lit_pixel():
         os.makedirs(expe_path, exist_ok=True)
         self.fig.savefig(expe_path + f'/{out}.png', bbox_inches='tight')
         self.fig.savefig(expe_path + f'/{out}.svg')
-        print("Sauvegarde réussit !")
+        print("Sauvegarde réussie !")
 
     def __call__(self,graphs=["g"],show=True):
         for g in graphs:
@@ -126,6 +136,7 @@ class lit_pixel():
                 case "g"|"graph"|"graphique":
                     self.makeGraph(show)
                     self.saveFig(str(self.floor))
+                    plt.close()
                 case "h"|"hist"|"histogramme":
                     self.makeHistogram(show)
                     

@@ -12,10 +12,10 @@ from plp import combined
 from PIL import Image
 
 class map_vis():
-    def __init__(self,countries, first_year=2000, last_year=2020):
+    def __init__(self,countries, first_year=2000, last_year=2021):
         self.countries = []
         for c in countries:
-            self.countries.append(country(c, first_year=first_year, last_year=last_year))
+            self.countries.append(country(c))
         self.first_year=first_year
         self.last_year=last_year
 
@@ -28,8 +28,8 @@ class map_vis():
                 )
         initJs= """const handler  = new overlayHandler("""+m.get_name()+""")"""
         for country in self.countries :
-            country(m)
-            initJs += country.get_init_js()
+            country(m,self.first_year,self.last_year)
+            initJs += country.get_init_js(self.first_year,self.last_year)
         self.add_custom_script(m,initJs)
         folium.LayerControl().add_to(m)
         m.save(os.path.join("index.html"))
@@ -43,7 +43,7 @@ class map_vis():
                 oninput="updateOpacity(this.value)"></label>
             <label for="year">Année : <span id="yearValue" name="yearValue">2010</span>
             <br/>
-            <input type="range" id="year" name="year" default=\""""+str(self.first_year)+"""" min=\""""+str(self.first_year)+"""" max=\""""+str(self.last_year)+"""" />
+            <input type="range" id="year" name="year" default=\""""+str(self.first_year)+"""" min=\""""+str(self.first_year)+"""" max=\""""+str(self.last_year - 1)+"""" />
             </label>
             <br/>
             <label for="DMSP">DMSP
@@ -56,8 +56,8 @@ class map_vis():
             <input type="radio" id="noneSat" name="sat" value="null">
             </label>
             <br/>
-            <label for="lightmap">Intensité
-            <input type="radio" id="lightmap" name="typeVis" value="lightmap">
+            <label for="ntl_intensity">Intensité
+            <input type="radio" id="ntl_intensity" name="typeVis" value="ntl_intensity">
             </label>
             <label for="kmeans">Kmeans
             <input type="radio" id="kmeans" name="typeVis" value="kmeans">
@@ -75,7 +75,7 @@ class map_vis():
         m.get_root().html.add_child(folium.Element(custom_js))
 
 class country():
-    def __init__(self,name,cluster=5,floor=30, first_year=2000, last_year=2020):
+    def __init__(self,name,cluster=5,floor=30,force=[]):
         raster_path = os.path.join("../data", name, "DMSP", "ntl_2000.tif")
         with rasterio.open(raster_path) as dataset:
             width = dataset.width
@@ -84,29 +84,32 @@ class country():
         #transformation de mercator 
         top_left_coords = rasterio.transform.xy(transform, 0, 0)
         bottom_right_coords = rasterio.transform.xy(transform, height - 1, width - 1)
-        self.first_year = first_year
-        self.last_year = last_year+1
         self.name = name
         self.floor = floor
+        self.force = force
         self.cluster = cluster
         self.bounds = [[top_left_coords[1], top_left_coords[0]], [bottom_right_coords[1], bottom_right_coords[0]]]
 
-    def __call__(self,m):
+    def __call__(self,m,first_year,last_year):
         print("Ajout à la carte de",self.name)
+        self.first_year = first_year
+        self.last_year = last_year
         li_sat = ["DMSP","VIIRS"]
         self.pre_generate_overlays(li_sat)
         self.generate_grp(li_sat).add_to(m)
+        self.first_year = None
+        self.last_year = None
 
     def pre_generate_overlays(self,li_sat):
         for sat in li_sat:
             self.pre_generate_kmeans(sat)
-            self.pre_generate_lightmaps(sat)
+            self.pre_generate_ntl_intensities(sat)
         self.pre_generate_plp()
 
     def pre_generate_kmeans(self,sat):
         path = os.path.join("../analysis",self.name,"kmeans_analysis",sat,
                             str(self.cluster),f"cluster_img_{self.cluster}.svg")
-        if not os.path.exists(path):
+        if not os.path.exists(path) or ("kmeans" in self.force):
             print("Kmeans non trouvé, création de l'image...",path)
             params = {
                 'ntl_type': sat,
@@ -121,37 +124,37 @@ class country():
         path = os.path.join("../analysis",self.name,"lit_pixel_analysis","DMSP_et_VIIRS",
                             str(self.floor),"lit_pixel_combined.png")
                             
-        if not os.path.exists(path) :
+        if not os.path.exists(path) or ("plp" in self.force) :
             print("Graph non trouvé, lancement de sa création")
             plp = combined(self.name,floor= self.floor)
             plp(show=False,graphs=['g','h'])
 
-    def pre_generate_lightmaps(self,sat):
+    def pre_generate_ntl_intensities(self,sat):
         vmax = -1
-        path = f'../analysis/{self.name}/lightmap/{sat}'
+        path = f'../analysis/{self.name}/ntl_intensity/{sat}'
         os.makedirs(path,exist_ok=True)
         for year in range(self.first_year,self.last_year):
-            temp_path = path + f"/lightmap_{year}_{sat}.png"
-            if not os.path.exists(temp_path):
-                print(f"Création de la lightmap pour {sat} de {year}")
+            temp_path = path + f"/ntl_intensity_{year}_{sat}.png"
+            if not os.path.exists(temp_path) or ("ntl_intensity" in self.force):
+                print(f"{self.name} : Création de l'image des intensité nocturnes pour {sat} de {year}")
                 if vmax == -1 :
                     if sat =="DMSP":
                         vmax= 64
                     else:
                         vmax= get_max_resized(self.name)
-                self.generate_lightmap(sat,year,temp_path,vmax)
+                self.generate_ntl_intensity(sat,year,temp_path,vmax)
 
-    def generate_lightmap(self,sat,year,path,vmax):
+    def generate_ntl_intensity(self,sat,year,path,vmax):
         img_path = os.path.join("../data",self.name,sat,f"ntl_{year}.tif")
         with rasterio.open(img_path) as img:
             raster_data = img.read(1)
         #raster_data = np.load(img_path)
         norm = Normalize(vmin=0, vmax=vmax)
-        lightmap_data = viridis(norm(raster_data))
+        ntl_intensity_data = viridis(norm(raster_data))
 
-        lightmap_image = (lightmap_data[:, :, :3] * 255).astype(np.uint8)
-        lightmap_pil = Image.fromarray(lightmap_image)
-        lightmap_pil.save(path)
+        ntl_intensity_image = (ntl_intensity_data[:, :, :3] * 255).astype(np.uint8)
+        ntl_intensity_pil = Image.fromarray(ntl_intensity_image)
+        ntl_intensity_pil.save(path)
     
     def generate_grp(self,li_sat):
         grp_country = folium.FeatureGroup(name=f"{self.name}",show=False)
@@ -206,16 +209,28 @@ class country():
         ).add_to(grp_country)
         return grp_country
 
-    def get_init_js(self):
+    def get_init_js(self,first_year,last_year):
         return """
-        handler.addOverlay("""+str(self.first_year)+""","""+str(self.last_year)+""",'"""+self.name+"""',"""+str(self.cluster)+""","""+str(self.bounds)+""")"""
+        handler.addOverlay("""+str(first_year)+""","""+str(last_year)+""",'"""+self.name+"""',"""+str(self.cluster)+""","""+str(self.bounds)+""")"""
 
 if __name__ == "__main__":  
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--name",nargs='+', help="Nom de la zone d'étude")
+    parser.add_argument("-n", "--name",nargs='+', help="Nom de la ou des zones d'études")
     parser.add_argument("-a", "--all",action='store_true', help="Prend toute les zones d'étude")
+    parser.add_argument("-f","--force",nargs="+",default=[],help="Force la génération des objets générables(ntl_intensity,graph,kmeans)")
     args = parser.parse_args() 
-
+    f = []
+    for i in args.force :
+        if i in ["kmeans","k"]:
+            f.append("kmeans")
+        if i in ["plp","p","allumées"]:
+            f.append("plp")
+        if i in ["ntl_intensity","ntl_i","ntl","n","intensity","i",]:
+            f.append("ntl_intensity")
+        if i in ["all","tous","a"]:
+            f.append("kmeans")
+            f.append("plp")
+            f.append("ntl_intensity")
     
     if args.all:
         temp = []
@@ -225,5 +240,5 @@ if __name__ == "__main__":
                     temp.append(file.name)
     else:
         temp = args.name
-    main = map_vis(temp, first_year=2013, last_year=2020)
+    main = map_vis(temp, first_year=2000, last_year=2021)
     main()
