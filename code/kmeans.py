@@ -60,7 +60,7 @@ all_norm = {'global': norm_global,
 
 class Kmeans():
 
-    def __init__(self, n_clusters=-1, ntimes=1, dist='euc', norm='local',ntl="DMSP", dataset_name='test', path='', x_range=None, aois=None, mask=None):
+    def __init__(self, n_clusters=-1, ntimes=1, dist='euc', norm='local',ntl="DMSP", dataset_name='test', path='', x_range=None, aois=None, mask=None, first_year=2020, last_year=2020):
         self.n_clusters = n_clusters
         self.ntimes = ntimes
 
@@ -72,11 +72,15 @@ class Kmeans():
         self.norm = all_norm[norm]
         self.norm_name = norm
 
+        # Années concernées
+        self.first_year = first_year
+        self.last_year = last_year
+
         # saving path
         self.dataset_name = dataset_name
         self.src_path = path + f'../analysis/{dataset_name}/kmeans_analysis/{ntl}/'
         self.distance_matrix_path = self.src_path #+ f'{self.dist_name}/' + f'{self.norm_name}/'
-        self.expe_path = self.distance_matrix_path + f'{self.n_clusters}/'
+        self.expe_path = self.distance_matrix_path + f'{self.n_clusters}_{self.first_year}-{self.last_year}/'
         os.makedirs(self.expe_path, exist_ok=True)
 
         # visualization
@@ -501,7 +505,7 @@ def main_kmeans(name,ntl_type="DMSP",clusters=[-1],show=False,resize=False, firs
                       'dataset_name': name,
                       'x_range': range(first_year, last_year+1)}
 
-            km = Kmeans(**params)
+            km = Kmeans(**params, first_year=first_year, last_year=last_year)
 
             km(ntls, samples_for_distance_matrix=1000, shape=data.getShape(),show=show)
 

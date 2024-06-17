@@ -10,12 +10,13 @@ from utils import get_max_resized
 from kmeans import main_kmeans
 from plp import combined
 from PIL import Image
+import math
 
 class map_vis():
     def __init__(self,countries, first_year=2000, last_year=2020):
         self.countries = []
         for c in countries:
-            self.countries.append(country(c))
+            self.countries.append(country(c, first_year=first_year, last_year=last_year))
         self.first_year=first_year
         self.last_year=last_year
 
@@ -41,7 +42,7 @@ class map_vis():
             <label for="opacityRange">Opacité des calques
             <input type="range" id="opacityRange" min="0" max="100" value="60" step="1" 
                 oninput="updateOpacity(this.value)"></label>
-            <label for="year">Année : <span id="yearValue" name="yearValue">2010</span>
+            <label for="year">Année : <span id="yearValue" name="yearValue">""" + str(math.ceil((self.first_year+self.last_year)/2)) + """</span>
             <br/>
             <input type="range" id="year" name="year" default=\""""+str(self.first_year)+"""" min=\""""+str(self.first_year)+"""" max=\""""+str(self.last_year)+"""" />
             </label>
@@ -75,7 +76,7 @@ class map_vis():
         m.get_root().html.add_child(folium.Element(custom_js))
 
 class country():
-    def __init__(self,name,cluster=5,floor=30,force=[]):
+    def __init__(self,name,cluster=5,floor=30,force=[],first_year=2000, last_year=2020):
         raster_path = os.path.join("../data", name, "DMSP", "ntl_2000.tif")
         with rasterio.open(raster_path) as dataset:
             width = dataset.width
@@ -88,6 +89,7 @@ class country():
         self.floor = floor
         self.force = force
         self.cluster = cluster
+        self.path = f"{cluster}_{first_year}-{last_year}"
         self.bounds = [[top_left_coords[1], top_left_coords[0]], [bottom_right_coords[1], bottom_right_coords[0]]]
 
     def __call__(self,m,first_year,last_year):
@@ -104,7 +106,7 @@ class country():
 
     def pre_generate_kmeans(self,sat,first_year,last_year):
         path = os.path.join("../analysis",self.name,"kmeans_analysis",sat,
-                            str(self.cluster),f"cluster_img_{self.cluster}.svg")
+                            self.path,f"cluster_img_{self.cluster}.svg")
         if not os.path.exists(path) or ("kmeans" in self.force):
             print("Kmeans non trouvé, création de l'image...",path)
             params = {
@@ -157,12 +159,13 @@ class country():
         colors = ['red','green']
         i=0
         for sat in li_sat:
+            print("""<img src="../analysis/"""+self.name+"""/kmeans_analysis/"""+sat+"""/"""+self.path+"""/clusters_"""+str(self.cluster)+""".png""")
             html_content = """
             <!DOCTYPE html>
             <html>
                 <body>
                     <p>"""+sat+"""</p>
-                    <img src="../analysis/"""+self.name+"""/kmeans_analysis/"""+sat+"""/"""+str(self.cluster)+"""/clusters_"""+str(self.cluster)+""".png"
+                    <img src="../analysis/"""+self.name+"""/kmeans_analysis/"""+sat+"""/"""+self.path+"""/clusters_"""+str(self.cluster)+""".png"
                     alt="Image" width="700" height="150">
                 </body>
             </html>
@@ -209,21 +212,28 @@ class country():
         return """
         handler.addOverlay("""+str(first_year)+""","""+str(last_year)+""",'"""+self.name+"""',"""+str(self.cluster)+""","""+str(self.bounds)+""")"""
 
-if __name__ == "__main__":  
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--name",nargs='+', help="Nom de la ou des zones d'études")
-    parser.add_argument("-a", "--all",action='store_true', help="Prend toute les zones d'étude")
-    parser.add_argument("-f","--force",nargs="+",default=[],help="Force la génération des objets générables(ntl_intensity,graph,kmeans)")
-    args = parser.parse_args() 
+    parser.add_argument("-n", "--name", nargs='+', help="Nom de la ou des zones d'études")
+    parser.add_argument("-a", "--all", action='store_true', help="Prend toute les zones d'étude")
+    parser.add_argument("-f", "--force", nargs="+", default=[], help="Force la génération des objets générables(ntl_intensity, graph, kmeans)")
+    parser.add_argument("-y", "--years", nargs="?", default="2000_2020", help="Les années de début et de fin séparées par un underscore")
+    args = parser.parse_args()
+    
+    # Traitement de l'argument years pour extraire les années
+    years = args.years.split('_')
+    first_year = int(years[0])
+    last_year = int(years[1])
+    
     f = []
-    for i in args.force :
-        if i in ["kmeans","k"]:
+    for i in args.force:
+        if i in ["kmeans", "k"]:
             f.append("kmeans")
-        if i in ["plp","p","allumées"]:
+        if i in ["plp", "p", "allumées"]:
             f.append("plp")
-        if i in ["ntl_intensity","ntl_i","ntl","n","intensity","i",]:
+        if i in ["ntl_intensity", "ntl_i", "ntl", "n", "intensity", "i"]:
             f.append("ntl_intensity")
-        if i in ["all","tous","a"]:
+        if i in ["all", "tous", "a"]:
             f.append("kmeans")
             f.append("plp")
             f.append("ntl_intensity")
@@ -232,9 +242,10 @@ if __name__ == "__main__":
         temp = []
         with os.scandir("../data") as files:
             for file in files:
-                if(file.is_dir()):
+                if file.is_dir():
                     temp.append(file.name)
     else:
         temp = args.name
-    main = map_vis(temp, first_year=2000, last_year=2013)
+    
+    main = map_vis(temp, first_year=first_year, last_year=last_year)
     main()

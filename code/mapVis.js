@@ -139,7 +139,7 @@ class overlayHandler{
                 console.log("BOUNDS",[[bot_map[0], top_map[1]], [top_map[0], bot_map[1]]])
                 this.imageOverlays["ntl_intensity"][sat] = temp;
                 this.imageOverlays["kmeans"][sat] = L.imageOverlay(
-                    path  + "/kmeans_analysis/"+ sat + "/" + clusters + "/cluster_img_"+clusters +".png",
+                    path  + "/kmeans_analysis/"+ sat + "/" + clusters + "_" + first_year + "-" + last_year + "/cluster_img_"+clusters +".png",
                     [[bot_map[0], top_map[1]], [top_map[0], bot_map[1]]],
                     {opacity: 0.6}
                 );
