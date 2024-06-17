@@ -134,13 +134,12 @@ class lit_pixel():
 
     def __call__(self,graphs=["g"],show=True):
         for g in graphs:
-            match g:
-                case "g"|"graph"|"graphique":
-                    self.makeGraph(show)
-                    self.saveFig(str(self.floor))
-                    plt.close()
-                case "h"|"hist"|"histogramme":
-                    self.makeHistogram(show)
+            if g in ["g", "graph", "graphique"]:
+                self.makeGraph(show)
+                self.saveFig(str(self.floor))
+                plt.close()
+            elif g in ["h", "hist", "histogramme"]:
+                self.makeHistogram(show)
                     
 
 class lit_pixel_resized(lit_pixel):
