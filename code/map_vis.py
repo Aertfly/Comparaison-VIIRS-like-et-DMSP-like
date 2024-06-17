@@ -12,14 +12,26 @@ from plp import combined
 from PIL import Image
 import math
 
-class map_vis():
-    def __init__(self,countries, first_year=2000, last_year=2020):
-        self.countries = []
-        for c in countries:
-            self.countries.append(country(c, first_year=first_year, last_year=last_year))
-        self.first_year=first_year
-        self.last_year=last_year
+class NoSuchFileForThoseYears(Exception):
+    def __init__(self, first_year, last_year):
+        super().__init__(f"ERREUR aucun fichier pour ses années premiére : {first_year} et derniére : {last_year}")
 
+class map_vis():
+    def __init__(self,countries,force=[],first_year=2000, last_year=2020):
+        self.countries = []
+        print("INIT",first_year,last_year)
+        for c in countries:
+            self.countries.append(country(c,force=force))
+        if(2000 <= first_year <= last_year <= 2020):
+            self.first_year= first_year
+            self.last_year = last_year
+        elif 2000 <= first_year <= 2021 and 2000 <= last_year <= 2021:
+            print("Année passée à l'envers, on les inverse")
+            self.last_year = self.first_year
+            self.first_year = self.last_year
+        else :
+            raise(NoSuchFileForThoseYears(first_year,last_year))
+        
     def __call__(self):
         m = folium.Map(location=[0, 0], 
                     zoom_start=5,
@@ -38,7 +50,18 @@ class map_vis():
 
     def add_custom_script(self,m,jsCountriesInit):
         custom_js= """
-        <div style="position: fixed; bottom: 50px; left: 50px; width: 220px; z-index: 9999;">
+        <style>
+        .leaflet-image-layer {
+            /* old android/safari*/
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges; /* safari */
+            image-rendering: pixelated; /* chrome */
+            image-rendering: -moz-crisp-edges; /* firefox */
+            image-rendering: -o-crisp-edges; /* opera */
+            -ms-interpolation-mode: nearest-neighbor; /* ie */
+        }
+        </style>
+        <div style="position: fixed; bottom: 50px; left: 50px; width: 230px; z-index: 9999;">
             <label for="opacityRange">Opacité des calques
             <input type="range" id="opacityRange" min="0" max="100" value="60" step="1" 
                 oninput="updateOpacity(this.value)"></label>
@@ -48,13 +71,13 @@ class map_vis():
             </label>
             <br/>
             <label for="DMSP">DMSP
-            <input type="radio" id="DMSP" name="sat" value="DMSP" >
+            <input type="radio" id="DMSP" name="sat" value="DMSP" onClick="updateImage(this.value)">
             </label>
             <label for="VIIRS">VIIRS
-            <input type="radio" id="VIIRS" name="sat" value="VIIRS" >
+            <input type="radio" id="VIIRS" name="sat" value="VIIRS" onClick="updateImage(this.value)" >
             </label>
             <label for="noneSat">Aucun
-            <input type="radio" id="noneSat" name="sat" value="null">
+            <input type="radio" id="noneSat" name="sat" value="null" onClick="updateImage(this.value)">
             </label>
             <br/>
             <label for="ntl_intensity">Intensité
@@ -69,6 +92,16 @@ class map_vis():
         </div>
         <script src="./mapVis.js"></script>
         <script>
+            function updateImage(sat) {
+                var img = document.getElementById("dynamic-image");
+                if (img){
+                    let path = img.src.split("/")
+                    let file = path[path.length-1].split("_")
+                    file[2] = sat + ".png"
+                    path[path.length-1] = file.join("_")
+                    img.src = path.join("/");
+                }
+            }
             document.addEventListener("DOMContentLoaded", function() {
                 """+jsCountriesInit+"""
             });
@@ -115,13 +148,13 @@ class country():
                 'show': False,
                 'clusters': [self.cluster]
             }
+            print(first_year,last_year)
             main_kmeans(self.name, **params, first_year=first_year, last_year=last_year)
             print("Image créée, reprise de la suite")
 
     def pre_generate_plp(self,first_year,last_year):
         path = os.path.join("../analysis",self.name,"lit_pixel_analysis","DMSP_et_VIIRS",
-                            str(self.floor),"lit_pixel_combined.png")
-                            
+                            str(self.floor),"lit_pixel_combined.png")                
         if not os.path.exists(path) or ("plp" in self.force) :
             print("Graph non trouvé, lancement de sa création")
             plp = combined(self.name,floor= self.floor , first_year=first_year, last_year=last_year)
@@ -131,7 +164,7 @@ class country():
         vmax = -1
         path = f'../analysis/{self.name}/ntl_intensity/{sat}'
         os.makedirs(path,exist_ok=True)
-        for year in range(first_year,last_year):
+        for year in range(first_year,last_year+1):
             temp_path = path + f"/ntl_intensity_{year}_{sat}.png"
             if not os.path.exists(temp_path) or ("ntl_intensity" in self.force):
                 print(f"{self.name} : Création de l'image des intensité nocturnes pour {sat} de {year}")
@@ -149,7 +182,6 @@ class country():
         #raster_data = np.load(img_path)
         norm = Normalize(vmin=0, vmax=vmax)
         ntl_intensity_data = viridis(norm(raster_data))
-
         ntl_intensity_image = (ntl_intensity_data[:, :, :3] * 255).astype(np.uint8)
         ntl_intensity_pil = Image.fromarray(ntl_intensity_image)
         ntl_intensity_pil.save(path)
@@ -194,16 +226,12 @@ class country():
             [self.bounds[1][0], self.bounds[0][1]], 
             icon=folium.Icon(color='purple', icon='info-sign'),
             popup=folium.Popup(
-            """<!DOCTYPE html>
-            <html>
-                <body>
+            """
+                <div>
                     <p>Histogramme</p>
-                    <img src="../analysis/"""+self.name+"""/lit_pixel_analysis/DMSP_et_VIIRS/histogramme/histogramme_"""
+                    <img id="dynamic-image" src="../analysis/"""+self.name+"""/lit_pixel_analysis/DMSP_et_VIIRS/histogramme/histogramme_"""
                     +self.name+"""_DMSP.png" alt="Image" width="852" height="535">
-                    <img src="../analysis/"""+self.name+"""/lit_pixel_analysis/DMSP_et_VIIRS/histogramme/histogramme_"""
-                    +self.name+"""_VIIRS.png" alt="Image" width="852" height="535">
-                </body>
-            </html>
+                </div>
             """,lazy=True,max_width=2000)
         ).add_to(grp_country)
         return grp_country
@@ -214,17 +242,11 @@ class country():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--name", nargs='+', help="Nom de la ou des zones d'études")
-    parser.add_argument("-a", "--all", action='store_true', help="Prend toute les zones d'étude")
-    parser.add_argument("-f", "--force", nargs="+", default=[], help="Force la génération des objets générables(ntl_intensity, graph, kmeans)")
-    parser.add_argument("-y", "--years", nargs="?", default="2000_2020", help="Les années de début et de fin séparées par un underscore")
-    args = parser.parse_args()
-    
-    # Traitement de l'argument years pour extraire les années
-    years = args.years.split('_')
-    first_year = int(years[0])
-    last_year = int(years[1])
-    
+    parser.add_argument("-n", "--name",nargs='+', help="Nom de la ou des zones d'études")
+    parser.add_argument("-a", "--all",action='store_true', help="Prend toute les zones d'étude")
+    parser.add_argument("-f","--force",nargs="+",default=[],help="Force la génération des objets générables(ntl_intensity,graph,kmeans)")
+    parser.add_argument("-y","--year",nargs="+",default=[2000,2020],type=int,help="Années de début et de fin")
+    args = parser.parse_args() 
     f = []
     for i in args.force:
         if i in ["kmeans", "k"]:
@@ -246,6 +268,5 @@ if __name__ == "__main__":
                     temp.append(file.name)
     else:
         temp = args.name
-    
-    main = map_vis(temp, first_year=first_year, last_year=last_year)
+    main = map_vis(temp,f, first_year=args.year[0], last_year=args.year[1])
     main()

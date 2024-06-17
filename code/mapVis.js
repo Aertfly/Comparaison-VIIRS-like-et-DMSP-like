@@ -22,14 +22,11 @@ class overlayHandler{
     }
     
     addOverlay(first_year,last_year,country,clusters,bounds){
-        console.log("On ajoute ",country)
         this.overlays[country] = new overlay(first_year,last_year,country,clusters,bounds[0],bounds[1]);
     }
     
     updateMap(year){
-        console.log(this.currentSat , this.currentType)
         if(this.currentSat && this.currentType){
-            console.log("Update")
             for (const country of this.currentlyChecked){
                 this.overlays[country].updateMap(this.map,this.currentType,this.currentSat,year)
             }
@@ -64,7 +61,6 @@ class overlayHandler{
         }
         
         var sat =  document.getElementsByName("sat")
-        console.log("DINGEZ",sat);
         for(const radio of sat){
             radio.addEventListener('change',()=>{
                 if (radio.checked){
@@ -74,7 +70,6 @@ class overlayHandler{
         }
         
         var typeVis =  document.getElementsByName("typeVis")
-        console.log("type",typeVis);
         for(const radio of typeVis){
             radio.addEventListener('change',()=>{
                 if (radio.checked){
@@ -88,21 +83,18 @@ class overlayHandler{
     }
     
     notifyCheck(country){
-        console.log(country,"a été coché");
         this.currentlyChecked.push(country);
         this.update();
     }
     
     notifyUncheck(country){
         let del = this.currentlyChecked.splice(this.currentlyChecked.indexOf(country),1);
-        console.log("On a demandé à retirer",country,"et j'ai retiré",del,"nouvel li ",this.overlays,this.currentlyChecked)
         if (this.overlays[del])this.overlays[del].removeCurrentOverlay(this.map);
     }
     
     
     updateTypeVis(typeVis){
         this.currentType = typeVis;
-        console.log("Nouveau type",this.currentType , typeVis)
         typeVis==null?this.removeFromMap():this.update();
     }
     
@@ -129,14 +121,13 @@ class overlayHandler{
             for (let sat of sats) {
                 path = "../analysis/" + country;
                 let temp = {}
-                for (let i = first_year; i < last_year; i++) {
+                for (let i = first_year; i < last_year+1; i++) {
                     let n = "/ntl_intensity_" + i + "_" + sat + ".png";
                     temp[i] = L.imageOverlay(path + '/ntl_intensity/' + sat + "/" + n,
                         [[bot_map[0], top_map[1]], [top_map[0], bot_map[1]]],
                         {opacity: 0.6}
                     );  
                 }
-                console.log("BOUNDS",[[bot_map[0], top_map[1]], [top_map[0], bot_map[1]]])
                 this.imageOverlays["ntl_intensity"][sat] = temp;
                 this.imageOverlays["kmeans"][sat] = L.imageOverlay(
                     path  + "/kmeans_analysis/"+ sat + "/" + clusters + "_" + first_year + "-" + last_year + "/cluster_img_"+clusters +".png",
@@ -150,6 +141,7 @@ class overlayHandler{
             this.removeCurrentOverlay(map);
             let nextOverlay =  this.imageOverlays[visType][currentSat];
             if (visType == "ntl_intensity") nextOverlay = nextOverlay[year]
+            console.log("Incroyable",nextOverlay,this.imageOverlays,year)
             this.currentOverlay = nextOverlay ? nextOverlay.addTo(map) : null;
             updateOpacity(document.getElementById('opacityRange').value);
         }
