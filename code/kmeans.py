@@ -464,29 +464,31 @@ class Kmeans():
 
         return self.centroid, df_scores
     
-def main_kmeans(name,ntl_type="DMSP",clusters=[-1],show=False,resize=False):
-    print("Paramétre passé à kmeans",
+def main_kmeans(name,ntl_type="DMSP",clusters=[-1],show=False,resize=False, first_year=2000, last_year=2020):
+    print("Paramètres passés à kmeans :",
           "|name :",name,
           "|ntl :",ntl_type,
           "|clusters :",clusters,
           "|show :",show,
-          "|resize :",resize
+          "|resize :",resize,
+          "|first_year :",first_year,
+          "|last_year :",last_year
     )
     n = name.lower()
     t =  ntl_type.upper()
 
     if resize :
         print("On utilise les données redimensionnées")
-        data = NTLSoftLoaderResized(n, ntl_type=t)
+        data = NTLSoftLoaderResized(n, ntl_type=t, first_year=first_year, last_year=last_year)
     else :
         print("On utilise les données normales")
-        data = NTLSoftLoader(n, ntl_type=t)
+        data = NTLSoftLoader(n, ntl_type=t, first_year=first_year, last_year=last_year)
         
 
     data.load_ntls()
     ntls = data.ntls
     ntls = np.moveaxis(ntls, 0, -1)
-    ntls = np.reshape(ntls, (-1, 21))
+    ntls = np.reshape(ntls, (-1, last_year-first_year+1))
 
     for norm in ['local']:
         for i in clusters:
@@ -497,7 +499,7 @@ def main_kmeans(name,ntl_type="DMSP",clusters=[-1],show=False,resize=False):
                       'norm': norm,
                       'ntl' : ntl_type,
                       'dataset_name': name,
-                      'x_range': range(2000, 2021)}
+                      'x_range': range(first_year, last_year+1)}
 
             km = Kmeans(**params)
 

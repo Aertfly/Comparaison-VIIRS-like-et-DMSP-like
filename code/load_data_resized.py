@@ -12,14 +12,16 @@ from utils import get_max_resized
 
 
 class NTLSoftLoaderResized(NTLSoftLoader):
-    def __init__(self, data, ntl_type="DMSP"):
+    def __init__(self, data, ntl_type="DMSP", first_year=2000, last_year=2020):
         super().__init__(data, ntl_type)
         self.path_to_ntls = '../dataResized'
+        self.first_year = first_year
+        self.last_year = last_year
 
     def load_ntls(self):    
-        ntls = [self.load_one_ntl(2000,self.ntl_type)]
+        ntls = [self.load_one_ntl(self.first_year,self.ntl_type)]
         shape = (len(ntls[0]),len(ntls[0][0]))
-        for year in range(2001, 2021):
+        for year in range(self.first_year+1, self.last_year+1):
             ntl = self.load_one_ntl(year,self.ntl_type)
             assert shape == (len(ntl),len(ntl[0])),f"Current image size is : {(len(ntl),len(ntl[0]))}, image size is {shape}"
             ntls.append(ntl)         

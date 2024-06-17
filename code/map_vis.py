@@ -12,7 +12,7 @@ from plp import combined
 from PIL import Image
 
 class map_vis():
-    def __init__(self,countries, first_year=2000, last_year=2021):
+    def __init__(self,countries, first_year=2000, last_year=2020):
         self.countries = []
         for c in countries:
             self.countries.append(country(c))
@@ -43,7 +43,7 @@ class map_vis():
                 oninput="updateOpacity(this.value)"></label>
             <label for="year">Année : <span id="yearValue" name="yearValue">2010</span>
             <br/>
-            <input type="range" id="year" name="year" default=\""""+str(self.first_year)+"""" min=\""""+str(self.first_year)+"""" max=\""""+str(self.last_year - 1)+"""" />
+            <input type="range" id="year" name="year" default=\""""+str(self.first_year)+"""" min=\""""+str(self.first_year)+"""" max=\""""+str(self.last_year)+"""" />
             </label>
             <br/>
             <label for="DMSP">DMSP
@@ -236,5 +236,5 @@ if __name__ == "__main__":
                     temp.append(file.name)
     else:
         temp = args.name
-    main = map_vis(temp, first_year=2000, last_year=2021)
+    main = map_vis(temp, first_year=2000, last_year=2013)
     main()

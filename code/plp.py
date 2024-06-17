@@ -13,12 +13,14 @@ def normalize(li):
     return li
 
 class lit_pixel(): 
-    def __init__(self,country,sat,floor=0,pth="../data",out="lit_pixel"):
+    def __init__(self,country,sat,floor=0,pth="../data",out="lit_pixel", first_year=2000, last_year=2020):
         self.sat = sat
         self.pathToData = pth
         self.country = country
         self.out = out
         self.floor = floor
+        self.first_year=first_year
+        self.last_year=last_year
 
 
         # Définir la taille de police par défaut pour tous les éléments
@@ -64,7 +66,7 @@ class lit_pixel():
 
 
     def makeGraph(self,show):
-        yearList = [x for x in range(2000,2021)]
+        yearList = [x for x in range(self.first_year,self.last_year+1)]
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)
 
         fig,ax1 = plt.subplots()
@@ -91,14 +93,14 @@ class lit_pixel():
                                  self.country,
                                  self.sat,
                                  f'ntl_année.tif'))
-        return  max(math.floor(pixel) for year in range(2000, 2021) for pixels in self.fetchImg(year) for pixel in pixels) + 1
+        return  max(math.floor(pixel) for year in range(self.first_year, self.last_year+1) for pixels in self.fetchImg(year) for pixel in pixels) + 1
 
     def makeHistogram(self,show):
         maximum = self.getMax()
         print("Intensité max :",maximum)
         repartition = [0]*maximum
         
-        for year in range(2000, 2021):
+        for year in range(self.first_year, self.last_year+1):
             img = self.fetchImg(year)
             for i in range(len(img)):
                 for j in range(len(img[i])):
@@ -154,8 +156,10 @@ class lit_pixel_resized(lit_pixel):
     
     
 class combined(lit_pixel_resized):
-    def __init__(self, country,sat="DMSP",floor=0 , pth='../dataResized', out="lit_pixel_combined"):
+    def __init__(self, country,sat="DMSP",floor=0 , pth='../dataResized', out="lit_pixel_combined", first_year=2000, last_year=2020):
         super().__init__(country, sat, floor, pth, out)
+        self.first_year=first_year
+        self.last_year=last_year
 
     def makeHistogram(self, show):
         li_sat = ["DMSP","VIIRS"]
@@ -164,7 +168,7 @@ class combined(lit_pixel_resized):
             super().makeHistogram(show)
 
     def makeGraph(self,show):
-        yearList = [x for x in range(2000,2021)]
+        yearList = [x for x in range(self.first_year,self.last_year+1)]
         self.sat = "DMSP"
         print("--- LANCEMENT CALCUL DMSP ---")
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)

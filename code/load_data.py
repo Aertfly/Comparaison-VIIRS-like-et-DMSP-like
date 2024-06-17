@@ -11,7 +11,7 @@ from utils import get_max
 
 class NTLSoftLoader():
 
-    def __init__(self, data, ntl_type="DMSP"):
+    def __init__(self, data, ntl_type="DMSP", first_year=2000, last_year=2020):
 
         self.path_to_ntls = '../data'
         self.data = data #dodoma, Madagascar, south_mada, syria, dar_es_salam
@@ -20,6 +20,9 @@ class NTLSoftLoader():
         self.ntl_type = ntl_type
         self.shape = (None,)
         self.max=-1
+        self.first_year = first_year
+        self.last_year = last_year
+
     def getShape(self):
         print(self.shape)
         return self.shape
@@ -28,11 +31,11 @@ class NTLSoftLoader():
 
         ntls = []
 
-        for year in range(2000, 2021):
+        for year in range(self.first_year+1, self.last_year+1):
             
             img = self.load_one_ntl(year, ntl_type=self.ntl_type)
             
-            if year == 2000:
+            if year == self.first_year:
                 img_size = img.shape
                 print("Image size is : ", img_size)
             
@@ -47,11 +50,11 @@ class NTLSoftLoader():
 
         sits = []
 
-        for year in range(2000, 2021):
+        for year in range(self.first_year, self.last_year+1):
             
             img = self.load_image(year)
             
-            if year == 2000:
+            if year == self.first_year:
                 img_size = img.shape
                 print("Image size is : ", img_size)
             
