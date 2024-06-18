@@ -23,7 +23,7 @@ class map_vis():
         min_accepted = 2000
         max_accepted = 2020
         for c in countries:
-            self.countries.append(country(c,force=force))
+            self.countries.append(country(c,force=force, first_year=first_year, last_year=last_year))
         if(min_accepted <= first_year <= last_year <= max_accepted):
             self.first_year= first_year
             self.last_year = last_year
