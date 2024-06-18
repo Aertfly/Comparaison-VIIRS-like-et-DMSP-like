@@ -18,12 +18,11 @@ class NoSuchFileForThoseYears(Exception):
 
 class map_vis():
     def __init__(self,countries,force=[],first_year=2000, last_year=2020):
-        self.countries = []
-        print("INIT",first_year,last_year)
+        self.force = force
+        self.countries = countries
+
         min_accepted = 2000
         max_accepted = 2020
-        for c in countries:
-            self.countries.append(country(c,force=force, first_year=first_year, last_year=last_year))
         if(min_accepted <= first_year <= last_year <= max_accepted):
             self.first_year= first_year
             self.last_year = last_year
@@ -41,10 +40,15 @@ class map_vis():
                     attr='OpenStreetMap France',
                     world_copy_jump=True
                 )
+        
         initJs= """const handler  = new overlayHandler("""+m.get_name()+""")"""
-        for country in self.countries :
-            country(m,self.first_year,self.last_year)
-            initJs += country.get_init_js(self.first_year,self.last_year)
+        for name in self.countries:
+            country_obj = country(name,
+                force=self.force,
+                first_year=self.first_year,
+                last_year=self.last_year)
+            country_obj(m)
+            initJs += country_obj.get_init_js()
         self.add_custom_script(m,initJs)
         folium.LayerControl().add_to(m)
         m.save(os.path.join("index.html"))
@@ -69,7 +73,7 @@ class map_vis():
                 oninput="updateOpacity(this.value)"></label>
             <label for="year">Année : <span id="yearValue" name="yearValue">""" + str(math.ceil((self.first_year+self.last_year)/2)) + """</span>
             <br/>
-            <input type="range" id="year" name="year" default=\""""+str(self.first_year)+"""" min=\""""+str(self.first_year)+"""" max=\""""+str(self.last_year)+"""" />
+            <input type="range" id="year" name="year" oninput="updateHist(this.value)" default=\""""+str(self.first_year)+"""" min=\""""+str(self.first_year)+"""" max=\""""+str(self.last_year)+"""" />
             </label>
             <br/>
             <label for="DMSP">DMSP
@@ -89,17 +93,27 @@ class map_vis():
             <input type="radio" id="kmeans" name="typeVis" value="kmeans">
             </label>
             <label for="noneType">Masquer
-            <input type="radio" id="noneType" name="typeVis" value="null">
+            <input type="radio"  id="noneType" name="typeVis" value="null">
             </label>
         </div>
         <script src="./mapVis.js"></script>
         <script>
+            function updateHist(year){
+                var img = document.getElementById("dynamic-image");
+                if (img){
+                    let path = img.src.split("/")
+                    let file = path[path.length-1].split("_")
+                    file[file.length-1] = year + ".png" 
+                    path[path.length-1] = file.join("_")
+                    img.src = path.join("/");
+                }
+            }
             function updateImage(sat) {
                 var img = document.getElementById("dynamic-image");
                 if (img){
                     let path = img.src.split("/")
                     let file = path[path.length-1].split("_")
-                    file[2] = sat + ".png"
+                    file[2] = sat
                     path[path.length-1] = file.join("_")
                     img.src = path.join("/");
                 }
@@ -111,7 +125,7 @@ class map_vis():
         m.get_root().html.add_child(folium.Element(custom_js))
 
 class country():
-    def __init__(self,name,cluster=5,floor=30,force=[],first_year=2000, last_year=2020):
+    def __init__(self,name,cluster=5,floor=0,force=[],first_year=2000, last_year=2020):
         raster_path = os.path.join("../data", name, "DMSP", "ntl_2000.tif")
         with rasterio.open(raster_path) as dataset:
             width = dataset.width
@@ -120,26 +134,29 @@ class country():
         #transformation de mercator 
         top_left_coords = rasterio.transform.xy(transform, 0, 0)
         bottom_right_coords = rasterio.transform.xy(transform, height - 1, width - 1)
+        self.bounds = [[top_left_coords[1], top_left_coords[0]], [bottom_right_coords[1], bottom_right_coords[0]]]
+
         self.name = name
         self.floor = floor
         self.force = force
         self.cluster = cluster
+        self.last_year = last_year
+        self.first_year  = first_year
         self.path = f"{cluster}_{first_year}-{last_year}"
-        self.bounds = [[top_left_coords[1], top_left_coords[0]], [bottom_right_coords[1], bottom_right_coords[0]]]
-
-    def __call__(self,m,first_year,last_year):
+        
+    def __call__(self,m):
         print("Ajout à la carte de",self.name)
         li_sat = ["DMSP","VIIRS"]
-        self.pre_generate_overlays(li_sat,first_year,last_year)
+        self.pre_generate_overlays(li_sat)
         self.generate_grp(li_sat).add_to(m)
 
-    def pre_generate_overlays(self,li_sat,first_year,last_year):
+    def pre_generate_overlays(self,li_sat):
         for sat in li_sat:
-            self.pre_generate_kmeans(sat,first_year,last_year)
-            self.pre_generate_ntl_intensities(sat,first_year,last_year)
-        self.pre_generate_plp(first_year,last_year)
+            self.pre_generate_kmeans(sat )
+            self.pre_generate_ntl_intensities(sat )
+        self.pre_generate_plp()
 
-    def pre_generate_kmeans(self,sat,first_year,last_year):
+    def pre_generate_kmeans(self,sat ):
         path = os.path.join("../analysis",self.name,"kmeans_analysis",sat,
                             self.path,f"cluster_img_{self.cluster}.svg")
         if not os.path.exists(path) or ("kmeans" in self.force):
@@ -150,23 +167,22 @@ class country():
                 'show': False,
                 'clusters': [self.cluster]
             }
-            print(first_year,last_year)
-            main_kmeans(self.name, **params, first_year=first_year, last_year=last_year)
+            main_kmeans(self.name, **params, first_year=self.first_year, last_year=self.last_year)
             print("Image créée, reprise de la suite")
 
-    def pre_generate_plp(self,first_year,last_year):
+    def pre_generate_plp(self):
         path = os.path.join("../analysis",self.name,"lit_pixel_analysis","DMSP_et_VIIRS",
                             str(self.floor),"lit_pixel_combined.png")                
         if not os.path.exists(path) or ("plp" in self.force) :
             print("Graph non trouvé, lancement de sa création")
-            plp = combined(self.name,floor= self.floor , first_year=first_year, last_year=last_year)
-            plp(show=False,graphs=['g','h'])
+            plp = combined(self.name,floor= self.floor , first_year=self.first_year, last_year=self.last_year)
+            plp(show=False,graphs=['g','histogramme_annuel'])
 
-    def pre_generate_ntl_intensities(self,sat,first_year,last_year):
+    def pre_generate_ntl_intensities(self,sat ):
         vmax = -1
         path = f'../analysis/{self.name}/ntl_intensity/{sat}'
         os.makedirs(path,exist_ok=True)
-        for year in range(first_year,last_year+1):
+        for year in range(self.first_year,self.last_year+1):
             temp_path = path + f"/ntl_intensity_{year}_{sat}.png"
             if not os.path.exists(temp_path) or ("ntl_intensity" in self.force):
                 print(f"{self.name} : Création de l'image des intensité nocturnes pour {sat} de {year}")
@@ -232,15 +248,15 @@ class country():
                 <div>
                     <p>Histogramme</p>
                     <img id="dynamic-image" src="../analysis/"""+self.name+"""/lit_pixel_analysis/DMSP_et_VIIRS/histogramme/histogramme_"""
-                    +self.name+"""_DMSP.png" alt="Image" width="852" height="535">
+                    +self.name+"""_DMSP_"""+str(math.ceil((self.first_year+self.last_year)/2))+""".png" alt="Image" width="852" height="535">
                 </div>
             """,lazy=True,max_width=2000)
         ).add_to(grp_country)
         return grp_country
 
-    def get_init_js(self,first_year,last_year):
+    def get_init_js(self ):
         return """
-        handler.addOverlay("""+str(first_year)+""","""+str(last_year)+""",'"""+self.name+"""',"""+str(self.cluster)+""","""+str(self.bounds)+""")"""
+        handler.addOverlay("""+str(self.first_year)+""","""+str(self.last_year)+""",'"""+self.name+"""',"""+str(self.cluster)+""","""+str(self.bounds)+""")"""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

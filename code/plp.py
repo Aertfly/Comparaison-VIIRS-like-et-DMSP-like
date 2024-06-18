@@ -7,10 +7,13 @@ import time
 import math
 
 def normalize(li):
-    m = max(li)
-    for i in range(len(li)):
-        li[i] = li[i]/m
-    return li
+    try:
+        m = max(li)
+        for i in range(len(li)):
+            li[i] = li[i]/m
+        return li
+    except ZeroDivisionError:  # dans le cas d'une liste composée uniquement de zéros
+        return li
 
 class lit_pixel(): 
     def __init__(self,country,sat,floor=0,pth="../data",out="lit_pixel", first_year=2000, last_year=2020):
@@ -21,7 +24,6 @@ class lit_pixel():
         self.floor = floor
         self.first_year=first_year
         self.last_year=last_year
-
 
         # Définir la taille de police par défaut pour tous les éléments
         plt.rc('font', size=14)           # taille de la police par défaut pour le texte
@@ -64,7 +66,6 @@ class lit_pixel():
         nbs = normalize(nbs)
         return (nbs,sums)
 
-
     def makeGraph(self,show):
         yearList = [x for x in range(self.first_year,self.last_year+1)]
         (nbs,sums) = self.AllsumAndNbPixelOn(yearList)
@@ -83,7 +84,6 @@ class lit_pixel():
         ax2.set_ylabel('Nombres de pixel allumées', color='r')
 
         plt.title(f"{self.sat} NTL - {self.country}")
-
         self.fig = fig
         if show : plt.show()
         
@@ -94,6 +94,39 @@ class lit_pixel():
                                  self.sat,
                                  f'ntl_année.tif'))
         return  max(math.floor(pixel) for year in range(self.first_year, self.last_year+1) for pixels in self.fetchImg(year) for pixel in pixels) + 1
+
+    def  makeYearlyHistogram(self, show):
+        repartitions = []
+        max_pixel_count = 0 #np.max([np.max(rep) for rep in repartitions])
+        max_val = self.getMax()
+
+        for year in range(self.first_year, self.last_year + 1):
+            img = self.fetchImg(year)
+            repartition = [0] * max_val
+
+            for i in range(len(img)):
+                for j in range(len(img[i])):
+                    repartition[math.floor(img[i][j])] += 1
+                temp = max(repartition)
+                if(temp>max_pixel_count):
+                    max_pixel_count = temp
+            repartitions.append(repartition)
+
+        max_pixel_count += max_pixel_count * 1/100
+        for year, repartition in zip(range(self.first_year, self.last_year + 1), repartitions):
+            self.fig = plt.figure(figsize=(10, 6))
+            plt.bar(range(len(repartition)), repartition)
+            
+            plt.xlabel('Intensité des pixels')
+            plt.ylabel('Nombre de pixels')
+            plt.title(f'Intensité des pixels {self.sat} - {self.country} - {year}')
+            
+            plt.ylim(0, max_pixel_count)
+            if show:
+                plt.show()
+            self.saveFig("histogramme", out=f"histogramme_{self.country}_{self.sat}_{year}")
+            print(f"{self.country} : histogramme {self.sat} {year - 1999}/{self.last_year - 1999} complété !")
+            plt.close()
 
     def makeHistogram(self,show):
         maximum = self.getMax()
@@ -108,7 +141,6 @@ class lit_pixel():
                     if img[i][j] > 150:
                         pass
                         #print(f"Pixel de luminosité {img[i][j]} en {i*32},{j*32} pour l'année {year}")
-
         self.fig = plt.figure(figsize=(10, 6))
         plt.bar(range(len(repartition)), repartition)
 
@@ -119,18 +151,17 @@ class lit_pixel():
         if show :plt.show()
         self.saveFig("histogramme",out=f"histogramme_{self.country}_{self.sat}")
         plt.close()
+    
     def get_expe_path(self,end_dir):
         return  os.path.join("../analysis",self.country,"lit_pixel_analysis",self.sat,end_dir)
     
     def saveFig(self,end_dir,out = ""):
         if out == "": 
             out = self.out
-        print("Lancement de la sauvegarde du graph ...")
         expe_path = self.get_expe_path(end_dir)
         os.makedirs(expe_path, exist_ok=True)
         self.fig.savefig(expe_path + f'/{out}.png', bbox_inches='tight')
         self.fig.savefig(expe_path + f'/{out}.svg')
-        print("Sauvegarde réussie !")
 
     def __call__(self,graphs=["g"],show=True):
         for g in graphs:
@@ -140,6 +171,8 @@ class lit_pixel():
                 plt.close()
             elif g in ["h", "hist", "histogramme"]:
                 self.makeHistogram(show)
+            elif g in ["ha", "multi", "multiHist","yearly","histogramme_annuel","annuel"]:
+                self. makeYearlyHistogram(False)
                     
 
 class lit_pixel_resized(lit_pixel):
@@ -165,6 +198,12 @@ class combined(lit_pixel_resized):
         for sat in li_sat:
             self.sat = sat
             super().makeHistogram(show)
+
+    def  makeYearlyHistogram(self, show):
+        li_sat = ["DMSP","VIIRS"]
+        for sat in li_sat:
+            self.sat = sat
+            super(). makeYearlyHistogram(show)
 
     def makeGraph(self,show):
         yearList = [x for x in range(self.first_year,self.last_year+1)]
@@ -214,8 +253,8 @@ if __name__ == '__main__':
     parser.add_argument("--graph","-g",nargs='+',default=["g"],help="graphique à créer , ex: graph hist")
     parser.add_argument("--floor","-f",type=int,default=0,help="palier à partir du quel ignorer les pixels")
     args = parser.parse_args()
-    n = args.name.lower()
-    t =  args.ntl_type.upper()
+    n = args.name.lower() 
+    t =  args.ntl_type.upper() 
     f = int(args.floor)
     if args.combined :
         print("Combined : Génération d'un plot resized avec VIIRS et DMSP")
