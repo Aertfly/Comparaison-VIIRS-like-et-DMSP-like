@@ -125,7 +125,7 @@ class map_vis():
         m.get_root().html.add_child(folium.Element(custom_js))
 
 class country():
-    def __init__(self,name,cluster=5,floor=30,force=[],first_year=2000, last_year=2020):
+    def __init__(self,name,cluster=5,floor=0,force=[],first_year=2000, last_year=2020):
         raster_path = os.path.join("../data", name, "DMSP", "ntl_2000.tif")
         with rasterio.open(raster_path) as dataset:
             width = dataset.width

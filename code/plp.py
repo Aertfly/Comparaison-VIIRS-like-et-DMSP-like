@@ -7,10 +7,13 @@ import time
 import math
 
 def normalize(li):
-    m = max(li)
-    for i in range(len(li)):
-        li[i] = li[i]/m
-    return li
+    try:
+        m = max(li)
+        for i in range(len(li)):
+            li[i] = li[i]/m
+        return li
+    except ZeroDivisionError:  # dans le cas d'une liste composée uniquement de zéros
+        return li
 
 class lit_pixel(): 
     def __init__(self,country,sat,floor=0,pth="../data",out="lit_pixel", first_year=2000, last_year=2020):
