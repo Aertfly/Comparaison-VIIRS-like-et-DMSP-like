@@ -46,6 +46,7 @@ class NTLSoftLoader():
         print("Taille d'image",img_size)
         self.ntls = np.array(ntls)
     
+
     def load_sits(self):
 
         sits = []
