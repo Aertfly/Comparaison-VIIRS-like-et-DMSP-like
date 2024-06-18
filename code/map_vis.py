@@ -20,15 +20,17 @@ class map_vis():
     def __init__(self,countries,force=[],first_year=2000, last_year=2020):
         self.countries = []
         print("INIT",first_year,last_year)
+        min_accepted = 2000
+        max_accepted = 2020
         for c in countries:
             self.countries.append(country(c,force=force))
-        if(2000 <= first_year <= last_year <= 2020):
+        if(min_accepted <= first_year <= last_year <= max_accepted):
             self.first_year= first_year
             self.last_year = last_year
-        elif 2000 <= first_year <= 2021 and 2000 <= last_year <= 2021:
+        elif min_accepted <= last_year <= first_year <= max_accepted:
             print("Année passée à l'envers, on les inverse")
-            self.last_year = self.first_year
-            self.first_year = self.last_year
+            self.last_year = first_year
+            self.first_year = last_year
         else :
             raise(NoSuchFileForThoseYears(first_year,last_year))
         
