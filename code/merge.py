@@ -36,9 +36,9 @@ if __name__ == "__main__":
     
 
     parser = argparse.ArgumentParser(description='Fusionner les clusters d\'une ville.')
-    parser.add_argument('--city', type=str, help='Le nom de la ville.')
+    parser.add_argument('--city',"-n", type=str, help='Le nom de la ville.')
     parser.add_argument('--NBclusters','-c', type=int,default=5, help='nb de clusters.')
-    parser.add_argument('--merge_lists', type=str, help='La liste des clusters à fusionner. Exemple: "[[0,1,3],[2,4]]".')
+    parser.add_argument('--merge_lists','-l', type=str, help='La liste des clusters à fusionner. Exemple: "[[0,1,3],[2,4]]".')
     parser.add_argument('--base_path', type=str,default= ".", help='Le chemin de base où les fichiers .npy sont stockés.')
     parser.add_argument('--ntl_type', type=str, help='Le type de données NTL (viirs ou dmsp).')
 
@@ -51,6 +51,12 @@ if __name__ == "__main__":
 
     # Appel de la fonction merge avec les arguments fournis
     new_X = merge(args.city, merge_lists, args.base_path, args.ntl_type,args.NBclusters,)
+    #debug
+    print("debug")
+    print(new_X)
+    print(new_X.shape)
+    print(len(new_X))
+    print(len(new_X[0]))
 
 
     params = {'n_clusters': 2,
