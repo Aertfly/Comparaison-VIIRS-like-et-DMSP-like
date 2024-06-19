@@ -12,6 +12,8 @@ from plp import combined
 from PIL import Image
 import math
 
+
+
 class NoSuchFileForThoseYears(Exception):
     def __init__(self, first_year, last_year):
         super().__init__(f"ERREUR aucun fichier pour ses années premiére : {first_year} et derniére : {last_year}")
@@ -99,7 +101,7 @@ class map_vis():
         <script src="./mapVis.js"></script>
         <script>
             function updateHist(year){
-                var img = document.getElementById("dynamic-image");
+                var img = document.getElementById("hist_img");
                 if (img){
                     let path = img.src.split("/")
                     let file = path[path.length-1].split("_")
@@ -109,12 +111,28 @@ class map_vis():
                 }
             }
             function updateImage(sat) {
-                var img = document.getElementById("dynamic-image");
+            console.log(sat)
+                if(sat == "null"){
+                                
+                    var closeButton = document.getElementsByClassName("leaflet-popup-close-button")[0];
+                    console.log(closeButton)
+                    if(closeButton){
+                    console.log("bruh")
+                        closeButton.click() = false
+                    }
+                }
+                var img = document.getElementById("hist_img");
                 if (img){
                     let path = img.src.split("/")
                     let file = path[path.length-1].split("_")
                     file[2] = sat
                     path[path.length-1] = file.join("_")
+                    img.src = path.join("/");
+                }
+                img = document.getElementById("kmeans_img");
+                if (img){
+                    let path = img.src.split("/")
+                    path[path.length -3] = sat 
                     img.src = path.join("/");
                 }
             }
@@ -136,19 +154,19 @@ class country():
         bottom_right_coords = rasterio.transform.xy(transform, height - 1, width - 1)
         self.bounds = [[top_left_coords[1], top_left_coords[0]], [bottom_right_coords[1], bottom_right_coords[0]]]
 
-        self.name = name
+        self.name = name    
         self.floor = floor
         self.force = force
         self.cluster = cluster
         self.last_year = last_year
         self.first_year  = first_year
-        self.path = f"{cluster}_{first_year}-{last_year}"
+        self.cluster_dir_name = f"{cluster}_{first_year}-{last_year}"
         
     def __call__(self,m):
         print("Ajout à la carte de",self.name)
         li_sat = ["DMSP","VIIRS"]
         self.pre_generate_overlays(li_sat)
-        self.generate_grp(li_sat).add_to(m)
+        self.generate_grp().add_to(m)
 
     def pre_generate_overlays(self,li_sat):
         for sat in li_sat:
@@ -157,10 +175,12 @@ class country():
         self.pre_generate_plp()
 
     def pre_generate_kmeans(self,sat ):
-        path = os.path.join("../analysis",self.name,"kmeans_analysis",sat,
-                            self.path,f"cluster_img_{self.cluster}.svg")
-        if not os.path.exists(path) or ("kmeans" in self.force):
-            print("Kmeans non trouvé, création de l'image...",path)
+        base_path = os.path.join("../analysis",self.name,"kmeans_analysis",sat,
+                            self.cluster_dir_name)
+        if (not os.path.exists(os.path.join(base_path,f"cluster_img_{self.cluster}.png"))
+            or not os.path.exists(os.path.join(base_path,f"clusters_{self.cluster}.png") 
+            or ("kmeans" in self.force))):
+            print("Kmeans non trouvé, création de l'image...")
             params = {
                 'ntl_type': sat,
                 'resize': True,
@@ -171,13 +191,37 @@ class country():
             print("Image créée, reprise de la suite")
 
     def pre_generate_plp(self):
-        path = os.path.join("../analysis",self.name,"lit_pixel_analysis","DMSP_et_VIIRS",
-                            str(self.floor),"lit_pixel_combined.png")                
-        if not os.path.exists(path) or ("plp" in self.force) :
-            print("Graph non trouvé, lancement de sa création")
+        graphs = self.generate_graphs()
+        if len(graphs) > 0:
             plp = combined(self.name,floor= self.floor , first_year=self.first_year, last_year=self.last_year)
-            plp(show=False,graphs=['g','histogramme_annuel'])
+            plp(show=False,graphs=graphs)
 
+    def generate_graphs(self):  
+        if ("plp" in self.force):
+            return ["graph","histogramme_annuel"]  
+        
+        graphs = []
+        base_path = os.path.join("../analysis",self.name,"lit_pixel_analysis","DMSP_et_VIIRS")   
+        if (not os.path.exists(os.path.join(base_path,str(self.floor),"lit_pixel_combined.png"))
+            or ("graph" in self.force)) :
+            print("Graph non trouvé, lancement de sa création")
+            graphs.append('graph')
+        if  ("histogramme_annuel" in self.force) :
+            graphs.append('histogramme_annuel')
+        else : 
+            if(self.is_missing_hist()):
+              graphs.append('histogramme_annuel')  
+        return graphs
+    
+    def is_missing_hist(self):
+        for sat in ["DMSP","VIIRS"]:
+            for year in (self.first_year,self.last_year):
+                if not os.path.exists(os.path.join("../analysis",self.name,"lit_pixel_analysis",
+                                                        "DMSP_et_VIIRS","histogramme",
+                                                        f"histogramme_{self.name}_{sat}_{year}.png")):
+                    print(f"histogrammes annuels non trouvés pour {self.name} avec {sat} en {year}, lancement de leur création")
+                    return True
+        
     def pre_generate_ntl_intensities(self,sat ):
         vmax = -1
         path = f'../analysis/{self.name}/ntl_intensity/{sat}'
@@ -204,30 +248,26 @@ class country():
         ntl_intensity_pil = Image.fromarray(ntl_intensity_image)
         ntl_intensity_pil.save(path)
     
-    def generate_grp(self,li_sat):
+    def generate_grp(self):
         grp_country = folium.FeatureGroup(name=f"{self.name}",show=False)
-        colors = ['red','green']
-        i=0
-        for sat in li_sat:
-            print("""<img src="../analysis/"""+self.name+"""/kmeans_analysis/"""+sat+"""/"""+self.path+"""/clusters_"""+str(self.cluster)+""".png""")
-            html_content = """
-            <!DOCTYPE html>
-            <html>
-                <body>
-                    <p>"""+sat+"""</p>
-                    <img src="../analysis/"""+self.name+"""/kmeans_analysis/"""+sat+"""/"""+self.path+"""/clusters_"""+str(self.cluster)+""".png"
-                    alt="Image" width="700" height="150">
-                </body>
-            </html>
-            """
-            folium.Marker(
-                [self.bounds[0][0], self.bounds[i][1]], 
-                popup=folium.Popup(html_content, max_width=1400, lazy=True),
-                icon=folium.Icon(color=colors[i], icon='info-sign')
-            ).add_to(grp_country)
-            i+=1
+
         folium.Marker(
-            [self.bounds[1][0], self.bounds[1][1]], 
+            [self.bounds[0][0], self.bounds[0][1]], 
+            popup=folium.Popup( """
+        <!DOCTYPE html>
+        <html>
+            <body>
+                <p>Carte des clusters kmeans</p>
+                <img id="kmeans_img" src="../analysis/"""+self.name+"""/kmeans_analysis/DMSP/"""+self.cluster_dir_name+"""/clusters_"""+str(self.cluster)+""".png"
+                alt="Image" width="700" height="150">
+            </body>
+        </html>
+        """, max_width=1400, lazy=True),
+            icon=folium.Icon(color='red', icon='info-sign')
+        ).add_to(grp_country)
+        
+        folium.Marker(
+            [self.bounds[0][0], self.bounds[0][1] + ((self.bounds[1][1] - self.bounds[0][1]) / 2)], 
             icon=folium.Icon(color='blue', icon='info-sign'),
             popup=folium.Popup(
             """<!DOCTYPE html>
@@ -240,14 +280,15 @@ class country():
             </html>
             """,max_width=1400,lazy=True)
         ).add_to(grp_country)
+
         folium.Marker(
-            [self.bounds[1][0], self.bounds[0][1]], 
+            [self.bounds[0][0], self.bounds[1][1]], 
             icon=folium.Icon(color='purple', icon='info-sign'),
             popup=folium.Popup(
             """
                 <div>
                     <p>Histogramme</p>
-                    <img id="dynamic-image" src="../analysis/"""+self.name+"""/lit_pixel_analysis/DMSP_et_VIIRS/histogramme/histogramme_"""
+                    <img id="hist_img" src="../analysis/"""+self.name+"""/lit_pixel_analysis/DMSP_et_VIIRS/histogramme/histogramme_"""
                     +self.name+"""_DMSP_"""+str(math.ceil((self.first_year+self.last_year)/2))+""".png" alt="Image" width="852" height="535">
                 </div>
             """,lazy=True,max_width=2000)

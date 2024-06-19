@@ -54,13 +54,6 @@ class overlayHandler{
                 let innerText = this.nextSibling.textContent.trim();
                 if (this.checked) {
                     handler.notifyCheck(innerText);
-                    const purpleMarker = document.getElementsByClassName("awesome-marker-icon-purple awesome-marker leaflet-zoom-animated leaflet-interactive")
-                    console.log(purpleMarker,"ding");
-                    for (let pm of purpleMarker){
-                        pm.addEventListener("click",()=>{
-                            console.log("DINGZ")
-                        });
-                    }
                 }else{
                     handler.notifyUncheck(innerText);
                 }
