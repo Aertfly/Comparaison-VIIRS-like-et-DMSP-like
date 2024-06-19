@@ -36,13 +36,26 @@ class map_vis():
             raise(NoSuchFileForThoseYears(first_year,last_year))
         
     def __call__(self):
+
+        fr = folium.TileLayer(tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png'
+                         ,attr="Openstreet map france",
+                           name='OpenStreetMapFrance'
+        )
         m = folium.Map(location=[0, 0], 
-                    zoom_start=5,
-                    tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
-                    attr='OpenStreetMap France',
+                    tiles=fr,
+                    zoom_start=3,
+                    attr='OpenStreetMap',
                     world_copy_jump=True
-                )
-        
+        )
+
+        # Ajouter une couche Stamen Terrain avec attribution correcte
+        folium.TileLayer(
+            tiles='s3://long-term.cache.maps.stamen.com/watercolor/{z}/{x}/{y}.jpg',
+            name='Stamen Terrain',
+            attr='Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.'
+        ).add_to(m)
+
+     
         initJs= """const handler  = new overlayHandler("""+m.get_name()+""")"""
         for name in self.countries:
             country_obj = country(name,
@@ -53,6 +66,27 @@ class map_vis():
             initJs += country_obj.get_init_js()
         self.add_custom_script(m,initJs)
         folium.LayerControl().add_to(m)
+                # Liste de différentes icônes et couleurs
+        markers = [
+            {'location': [45.5236, -122.6750], 'icon': 'info-sign', 'color': 'red', 'popup': 'Red Info Sign'},
+            {'location': [45.5244, -122.6699], 'icon': 'cloud', 'color': 'blue', 'popup': 'Blue Cloud'},
+            {'location': [45.5215, -122.6764], 'icon': 'heart', 'color': 'green', 'icon_color': 'white', 'popup': 'Green Heart'},
+            {'location': [45.5222, -122.6655], 'icon': 'home', 'color': 'black', 'angle': 45, 'popup': 'Black Home'},
+            {'location': [45.5250, -122.6780], 'icon': 'star', 'color': 'pink', 'popup': 'Pink Star'}
+        ]
+
+        # Ajouter les marqueurs à la carte
+        for marker in markers:
+            folium.Marker(
+                location=marker['location'],
+                popup=marker['popup'],
+                icon=folium.Icon(
+                    icon=marker['icon'],
+                    color=marker.get('color', 'blue'),
+                    icon_color=marker.get('icon_color', None),
+                    angle=marker.get('angle', 0)
+                )
+            ).add_to(m)
         m.save(os.path.join("index.html"))
         print("Map sauvegardée !")
 
@@ -292,6 +326,12 @@ class country():
                     +self.name+"""_DMSP_"""+str(math.ceil((self.first_year+self.last_year)/2))+""".png" alt="Image" width="852" height="535">
                 </div>
             """,lazy=True,max_width=2000)
+        ).add_to(grp_country)
+
+        folium.Rectangle(
+        bounds=[self.bounds[0], self.bounds[1]],
+            color='black',
+            weight = 2.5
         ).add_to(grp_country)
         return grp_country
 
