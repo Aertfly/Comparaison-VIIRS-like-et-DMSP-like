@@ -37,16 +37,17 @@ class map_vis():
         
     def __call__(self):
 
-        fr = folium.TileLayer(tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png'
-                         ,attr="Openstreet map france",
-                           name='OpenStreetMapFrance'
-        )
         m = folium.Map(location=[0, 0], 
-                    tiles=fr,
+                    tiles= folium.TileLayer(attr="Openstreetmap",name="Openstreetmap"),
                     zoom_start=3,
                     attr='OpenStreetMap',
                     world_copy_jump=True
         )
+
+        folium.TileLayer(tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+                        attr="OpenStreetMap France",
+                        name='OpenStreetMap France'
+        ).add_to(m)
 
         # Ajouter une couche Stamen Terrain avec attribution correcte
         folium.TileLayer(
@@ -147,7 +148,6 @@ class map_vis():
             function updateImage(sat) {
             console.log(sat)
                 if(sat == "null"){
-                                
                     var closeButton = document.getElementsByClassName("leaflet-popup-close-button")[0];
                     console.log(closeButton)
                     if(closeButton){
@@ -168,6 +168,8 @@ class map_vis():
                     let path = img.src.split("/")
                     path[path.length -3] = sat 
                     img.src = path.join("/");
+                    document.getElementById("kmeans_sat").innerText = sat == "DMSP" ? "DMSP" : sat == "VIIRS" ? "VIIRS" : "none" ;
+                    console.log(document.getElementById("kmeans_sat") , sat == "DMSP" ? "DMSP" : sat == "VIIRS" ? "VIIRS" : "none" )
                 }
             }
             document.addEventListener("DOMContentLoaded", function() {
@@ -291,7 +293,7 @@ class country():
         <!DOCTYPE html>
         <html>
             <body>
-                <p>Carte des clusters kmeans</p>
+                <p>Carte des clusters kmeans <span id="kmeans_sat">DMSP</span></p>
                 <img id="kmeans_img" src="../analysis/"""+self.name+"""/kmeans_analysis/DMSP/"""+self.cluster_dir_name+"""/clusters_"""+str(self.cluster)+""".png"
                 alt="Image" width="700" height="150">
             </body>

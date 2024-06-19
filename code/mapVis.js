@@ -17,6 +17,7 @@ class overlayHandler{
         this.map = map;
     }
     
+    
     addOverlays(overlays){
         this.overlays = overlays;
     }
