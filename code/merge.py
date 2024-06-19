@@ -51,15 +51,15 @@ if __name__ == "__main__":
 
     # Appel de la fonction merge avec les arguments fournis
     new_X = merge(args.city, merge_lists, args.base_path, args.ntl_type,args.NBclusters,)
-    #debug
-    print("debug")
-    print(new_X)
-    print(new_X.shape)
-    print(len(new_X))
-    print(len(new_X[0]))
+    
+    sum=0
+    j=len(merge_lists)
+    for i in range(j):
+        sum+=len(merge_lists[i])
+    
 
 
-    params = {'n_clusters': 2,
+    params = {'n_clusters': args.NBclusters-sum+j,
                 'ntimes': 1,
                     'dist': 'euc',
                     'norm': "local",
@@ -69,6 +69,6 @@ if __name__ == "__main__":
     
     km = Kmeans(**params, first_year=2000, last_year=2020)
 
-    km(new_X, samples_for_distance_matrix=1000, shape= (len(new_X),len(new_X[0])),show=True,raw=False)
+    km(new_X, samples_for_distance_matrix=1000, shape= (72,101),show=True,raw=False)
 
     
