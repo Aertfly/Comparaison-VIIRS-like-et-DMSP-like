@@ -51,14 +51,16 @@ class overlayHandler{
         
         var checkboxes = document.getElementsByClassName('leaflet-control-layers-selector');
         for (var i = 0; i < checkboxes.length; i++){
-            checkboxes[i].addEventListener('change', function() {
-                let innerText = this.nextSibling.textContent.trim();
-                if (this.checked) {
-                    handler.notifyCheck(innerText);
-                }else{
-                    handler.notifyUncheck(innerText);
-                }
-            });
+            if (checkboxes[i].type == "checkbox" ){
+                checkboxes[i].addEventListener('change', function() {
+                    let innerText = this.nextSibling.textContent.trim();
+                    if (this.checked) {
+                        handler.notifyCheck(innerText);
+                    }else{
+                        handler.notifyUncheck(innerText);
+                    }
+                });
+            }    
         }
         
         var sat =  document.getElementsByName("sat")

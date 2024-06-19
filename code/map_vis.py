@@ -41,22 +41,18 @@ class map_vis():
                     tiles= folium.TileLayer(attr="Openstreetmap",name="Openstreetmap"),
                     zoom_start=3,
                     attr='OpenStreetMap',
-                    world_copy_jump=True
+                    world_copy_jump=True    
         )
-
         folium.TileLayer(tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
                         attr="OpenStreetMap France",
                         name='OpenStreetMap France'
         ).add_to(m)
 
-        # Ajouter une couche Stamen Terrain avec attribution correcte
-        folium.TileLayer(
-            tiles='s3://long-term.cache.maps.stamen.com/watercolor/{z}/{x}/{y}.jpg',
-            name='Stamen Terrain',
-            attr='Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.'
-        ).add_to(m)
 
-     
+
+
+
+
         initJs= """const handler  = new overlayHandler("""+m.get_name()+""")"""
         for name in self.countries:
             country_obj = country(name,
