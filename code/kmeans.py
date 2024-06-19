@@ -330,7 +330,7 @@ class Kmeans():
             ax = self.fig.add_subplot(gs00[i])
             ax = self.plot_a_class(X_vis, preds, ax, cls, self.colors[i])
             ax.set_title(f"{i}")
-
+        
         return self.fig
     
     def plot_kmeans_label_only(self, X_vis, preds):
@@ -341,6 +341,7 @@ class Kmeans():
                                                     fact=2),
                                 dpi=150
                                 )
+        print("width:",tex_witdh_in_pt)
 
         for cls, ax in zip(range(self.n_clusters), axes):
             ax = self.plot_a_class(X_vis, preds, ax, cls, self.colors[cls])
@@ -394,6 +395,12 @@ class Kmeans():
         plt.imsave(self.expe_path + f'cluster_img_{self.n_clusters}.png', img)
         plt.imsave(self.expe_path + f'cluster_img_{self.n_clusters}.svg', img)
         return self.fig
+    
+    
+    
+    def save_X_vis(self,X_vis):
+        path= self.distance_matrix_path+f'{self.n_clusters}_{self.dataset_name}.npy'
+        np.save( path, X_vis)
 
     def vis(self, X_vis, preds, shape, df_scores, refc=None, show = True):
 
@@ -423,16 +430,21 @@ class Kmeans():
 
         print("saving graph...")
         fig = self.plot_kmeans_label_only(X_vis, preds)
+       
         fig.savefig(self.expe_path + f'clusters_{self.n_clusters}.png')
         fig.savefig(self.expe_path + f'clusters_{self.n_clusters}.svg')
 
-    def __call__(self, X_raw, samples_for_distance_matrix, shape, refc=None , show = True):
+        #self.save_X_vis(X_vis)
+
+    def __call__(self, X_raw, samples_for_distance_matrix, shape, refc=None , show = True, raw=True):
 
         print('--------------' + f'K = {self.n_clusters}' + '---------------')
         print('Starting at ', str(datetime.datetime.now()))
         tic = time.time()
-
-        X, mean = self.norm(X_raw)
+        if raw:
+            X, mean = self.norm(X_raw)
+        else:
+            X = X_raw
         if self.n_clusters == -1 :
             self.n_clusters = self.optimal_k(X)
         colors = np.uint8((np.arange(0, self.n_clusters)/self.n_clusters)*255)
@@ -459,7 +471,9 @@ class Kmeans():
         print('Inertia : ', self.inertia(X, self.centroid, self.dist))
         print('Average Silhouette score : ', global_sil_scores.mean())
         print('Averaged per Class Silhouette Score : ', df_scores['mean'].mean())
- 
+
+        self.save_X_vis(X)
+        Y=np.load("../analysis/new_delhi/kmeans_analysis/dmsp/5_new_delhi_merged.npy")
         self.vis(X, preds, shape, df_scores=df_scores, refc=refc,show=show)
 
         print('Ending at ', str(datetime.datetime.now()))
@@ -503,7 +517,8 @@ def main_kmeans(name,ntl_type="DMSP",clusters=[-1],show=False,resize=False, firs
                       'norm': norm,
                       'ntl' : ntl_type,
                       'dataset_name': name,
-                      'x_range': range(first_year, last_year+1)}
+                      'x_range': range(first_year, last_year+1)
+                      }
 
             km = Kmeans(**params, first_year=first_year, last_year=last_year)
 
