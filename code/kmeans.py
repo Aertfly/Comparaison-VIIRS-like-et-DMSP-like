@@ -473,7 +473,6 @@ class Kmeans():
         print('Averaged per Class Silhouette Score : ', df_scores['mean'].mean())
 
         self.save_X_vis(X)
-        Y=np.load("../analysis/new_delhi/kmeans_analysis/dmsp/5_new_delhi_merged.npy")
         self.vis(X, preds, shape, df_scores=df_scores, refc=refc,show=show)
 
         print('Ending at ', str(datetime.datetime.now()))
