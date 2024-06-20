@@ -38,7 +38,7 @@ class map_vis():
     def __call__(self):
 
         m = folium.Map(location=[0, 0], 
-                    tiles= folium.TileLayer(attr="Openstreetmap",name="Openstreetmap"),
+                    tiles= folium.TileLayer(attr="Openstreetmap",show=False,name="Openstreetmap"),
                     zoom_start=3,
                     attr='OpenStreetMap',
                     world_copy_jump=True    
@@ -46,6 +46,20 @@ class map_vis():
         folium.TileLayer(tiles='https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
                         attr="OpenStreetMap France",
                         name='OpenStreetMap France'
+        ).add_to(m)
+
+        folium.TileLayer(
+            tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            name='ESRI World Imagery',
+            attr='Tiles © Esri',
+            show=False
+        ).add_to(m)
+
+        folium.TileLayer(
+            tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+            name='OpenTopoMap',
+            attr='Map data © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)',
+            show=False
         ).add_to(m)
 
 
