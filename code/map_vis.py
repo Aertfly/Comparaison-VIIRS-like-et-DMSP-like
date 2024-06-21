@@ -201,7 +201,7 @@ class country():
         
         graphs = []
         base_path = os.path.join("../analysis",self.name,"lit_pixel_analysis","DMSP_et_VIIRS")   
-        if (not os.path.exists(os.path.join(base_path,str(self.floor),"lit_pixel_combined.png"))
+        if (not os.path.exists(os.path.join(base_path,str(self.floor),f"lit_pixel_combined_{self.first_year}_{self.last_year}.png"))
             or ("graph" in self.force)) :
             print("Graph non trouvé, lancement de sa création")
             graphs.append('graph')
@@ -273,7 +273,7 @@ class country():
             <html>
                 <body>
                     <p>Graphique</p>
-                    <img src="../analysis/"""+self.name+"""/lit_pixel_analysis/DMSP_et_VIIRS/"""+str(self.floor)+"""/lit_pixel_combined.png"
+                    <img src="../analysis/"""+self.name+"""/lit_pixel_analysis/DMSP_et_VIIRS/"""+str(self.floor)+"""/lit_pixel_combined_"""+str(self.first_year)+"""_"""+str(self.last_year)+""".png"
                     alt="Image" width="598" height="457">
                 </body>
             </html>

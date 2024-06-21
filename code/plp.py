@@ -189,7 +189,7 @@ class lit_pixel_resized(lit_pixel):
     
 class combined(lit_pixel_resized):
     def __init__(self, country,sat="DMSP",floor=0 , pth='../dataResized', out="lit_pixel_combined", first_year=2000, last_year=2020):
-        super().__init__(country, sat, floor, pth, out)
+        super().__init__(country, sat, floor, pth, f"{out}_{first_year}_{last_year}")
         self.first_year=first_year
         self.last_year=last_year
 
