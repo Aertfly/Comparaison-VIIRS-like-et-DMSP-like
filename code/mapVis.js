@@ -91,16 +91,17 @@ class overlayHandler{
         for (let marker of markers){
             if(marker.dataset.hasEvent)continue
             marker.addEventListener("click",()=>{
-                let cpt = 0
-                let histInterval = setInterval(()=>{
-                    cpt++
+                let cpt = 0;
+                let idInterval = setInterval(()=>{
+                    cpt++;
                     console.log("Tour : ", cpt)
-                    let img = document.getElementById(getImgName(color))
+                    let img = document.getElementById(getImgName(color));
                     if(img){
-                        if (color == "purple")updateHist($('#year').val())
-                        if (this.currentSat)updateImage(this.currentSat)
-                        clearInterval(histInterval)
+                        if (color == "purple")updateHist($('#year').val());
+                        if (this.currentSat)updateImage(this.currentSat);
+                        clearInterval(idInterval);
                     }
+                    if(cpt>=100)clearInterval();
                 },10)
             });
             marker.dataset.hasEvent = true
