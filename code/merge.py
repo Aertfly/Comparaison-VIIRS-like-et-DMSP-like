@@ -23,6 +23,11 @@ def merge(city, merge_lists, base_path, ntl_type,NBclusters):
         for cluster in clusters_to_merge:
             new_cluster_data[cluster_data == cluster] = new_class
     
+    #for i in range
+    print("nombre pixels classe 0 :", len(np.where(cluster_data==0)[0]+np.where(cluster_data==0)[1])) 
+
+    print(np.where(cluster_data==0)[0])
+    
     # Sauvegarder les nouvelles données dans un fichier .npy
     new_file_path = os.path.join(base_path, f'../analysis/{city}/kmeans_analysis/{ntl_type}/{NBclusters}_{city}_merged.npy')
     np.save(new_file_path, new_cluster_data)
