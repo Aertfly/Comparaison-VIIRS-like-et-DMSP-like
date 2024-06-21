@@ -56,6 +56,7 @@ class overlayHandler{
                     let innerText = this.nextSibling.textContent.trim();
                     if (this.checked) {
                         handler.notifyCheck(innerText);
+                        for (let color of ["red","purple"])handler.addMarkerListener(color)
                     }else{
                         handler.notifyUncheck(innerText);
                     }
@@ -84,10 +85,32 @@ class overlayHandler{
     update(){
         this.updateMap($('#year').val())
     }
+
+    addMarkerListener(color){
+        const markers = document.getElementsByClassName("awesome-marker-icon-"+color+" awesome-marker leaflet-zoom-animated leaflet-interactive")
+        for (let marker of markers){
+            if(marker.dataset.hasEvent)continue
+            marker.addEventListener("click",()=>{
+                let cpt = 0
+                let histInterval = setInterval(()=>{
+                    cpt++
+                    console.log("Tour : ", cpt)
+                    let img = document.getElementById(getImgName(color))
+                    if(img){
+                        if (color == "purple")updateHist($('#year').val())
+                        if (this.currentSat)updateImage(this.currentSat)
+                        clearInterval(histInterval)
+                    }
+                },10)
+            });
+            marker.dataset.hasEvent = true
+        }
+    }
     
     notifyCheck(country){
         this.currentlyChecked.push(country);
         this.update();
+
     }
     
     notifyUncheck(country){
@@ -154,4 +177,48 @@ class overlayHandler{
         }
         
     }
+
+function getImgName(color){
+    return color == "purple"?"hist_img":"kmeans_img"
+}
+
+function updateHist(year){
+    var img = document.getElementById("hist_img");
+    if (img){
+        let path = img.src.split("/")
+        let file = path[path.length-1].split("_")
+        file[file.length-1] = year + ".png" 
+        path[path.length-1] = file.join("_")
+        img.src = path.join("/");
+    }
+}
+function updateImage(sat) {
+    if(sat == "null"){
+        var closeButton = document.getElementsByClassName("leaflet-popup-close-button")[0];
+        console.log(closeButton);
+        if(closeButton){
+        console.log("bruh");
+        closeButton.click() ;
+        return;
+        }
+    }
+    var img = document.getElementById("hist_img");
+    if (img){
+        let path = img.src.split("/");
+        let file = path[path.length-1].split("_");
+        file[2] = sat;
+        path[path.length-1] = file.join("_");
+        img.src = path.join("/");
+        return;
+    }
+    img = document.getElementById("kmeans_img");
+    if (img){
+        let path = img.src.split("/");
+        path[path.length -3] = sat;
+        img.src = path.join("/");
+        document.getElementById("kmeans_sat").innerText = sat == "DMSP" ? "DMSP" : sat == "VIIRS" ? "VIIRS" : "none" ;
+        console.log(document.getElementById("kmeans_sat") , sat == "DMSP" ? "DMSP" : sat == "VIIRS" ? "VIIRS" : "none" );
+        return;
+    }
+}
 

@@ -38,7 +38,7 @@ class map_vis():
     def __call__(self):
 
         m = folium.Map(location=[0, 0], 
-                    tiles= folium.TileLayer(attr="Openstreetmap",name="Openstreetmap"),
+                    tiles= folium.TileLayer(attr="Openstreetmap",show=False,name="Openstreetmap"),
                     zoom_start=3,
                     attr='OpenStreetMap',
                     world_copy_jump=True    
@@ -48,7 +48,31 @@ class map_vis():
                         name='OpenStreetMap France'
         ).add_to(m)
 
+        folium.TileLayer(
+            tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            name='ESRI World Imagery',
+            attr='Tiles © Esri',
+            show=False
+        ).add_to(m)
 
+        folium.TileLayer(
+            tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+            name='OpenTopoMap',
+            attr='Map data © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)',
+            show=False
+        ).add_to(m)
+
+        # Ajouter une couche NASAGIBS
+        time = '2023-01-01'
+        tile_matrix_set = 'GoogleMapsCompatible_Level9'
+
+        # folium.TileLayer(
+        #     tiles='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_DayNightBand_AtSensor_M15/default/2023-01-01/EPSG:4326_500m/{z}/{y}/{x}.jpg',
+        #     name='NASAGIBS',
+        #     attr='Imagery provided by NASA GIBS',
+
+        #     control=True
+        # ).add_to(m)
 
 
 
@@ -63,27 +87,6 @@ class map_vis():
             initJs += country_obj.get_init_js()
         self.add_custom_script(m,initJs)
         folium.LayerControl().add_to(m)
-                # Liste de différentes icônes et couleurs
-        markers = [
-            {'location': [45.5236, -122.6750], 'icon': 'info-sign', 'color': 'red', 'popup': 'Red Info Sign'},
-            {'location': [45.5244, -122.6699], 'icon': 'cloud', 'color': 'blue', 'popup': 'Blue Cloud'},
-            {'location': [45.5215, -122.6764], 'icon': 'heart', 'color': 'green', 'icon_color': 'white', 'popup': 'Green Heart'},
-            {'location': [45.5222, -122.6655], 'icon': 'home', 'color': 'black', 'angle': 45, 'popup': 'Black Home'},
-            {'location': [45.5250, -122.6780], 'icon': 'star', 'color': 'pink', 'popup': 'Pink Star'}
-        ]
-
-        # Ajouter les marqueurs à la carte
-        for marker in markers:
-            folium.Marker(
-                location=marker['location'],
-                popup=marker['popup'],
-                icon=folium.Icon(
-                    icon=marker['icon'],
-                    color=marker.get('color', 'blue'),
-                    icon_color=marker.get('icon_color', None),
-                    angle=marker.get('angle', 0)
-                )
-            ).add_to(m)
         m.save(os.path.join("index.html"))
         print("Map sauvegardée !")
 
@@ -131,43 +134,7 @@ class map_vis():
         </div>
         <script src="./mapVis.js"></script>
         <script>
-            function updateHist(year){
-                var img = document.getElementById("hist_img");
-                if (img){
-                    let path = img.src.split("/")
-                    let file = path[path.length-1].split("_")
-                    file[file.length-1] = year + ".png" 
-                    path[path.length-1] = file.join("_")
-                    img.src = path.join("/");
-                }
-            }
-            function updateImage(sat) {
-            console.log(sat)
-                if(sat == "null"){
-                    var closeButton = document.getElementsByClassName("leaflet-popup-close-button")[0];
-                    console.log(closeButton)
-                    if(closeButton){
-                    console.log("bruh")
-                        closeButton.click() = false
-                    }
-                }
-                var img = document.getElementById("hist_img");
-                if (img){
-                    let path = img.src.split("/")
-                    let file = path[path.length-1].split("_")
-                    file[2] = sat
-                    path[path.length-1] = file.join("_")
-                    img.src = path.join("/");
-                }
-                img = document.getElementById("kmeans_img");
-                if (img){
-                    let path = img.src.split("/")
-                    path[path.length -3] = sat 
-                    img.src = path.join("/");
-                    document.getElementById("kmeans_sat").innerText = sat == "DMSP" ? "DMSP" : sat == "VIIRS" ? "VIIRS" : "none" ;
-                    console.log(document.getElementById("kmeans_sat") , sat == "DMSP" ? "DMSP" : sat == "VIIRS" ? "VIIRS" : "none" )
-                }
-            }
+
             document.addEventListener("DOMContentLoaded", function() {
                 """+jsCountriesInit+"""
             });
