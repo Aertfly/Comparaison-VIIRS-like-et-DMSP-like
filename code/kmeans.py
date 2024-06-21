@@ -305,14 +305,14 @@ class Kmeans():
         self.idx = idx 
 
         print(self.idx)
-        self.fig.legend(
-            [mpatches.Patch(color=self.colors[i]) for i in range(self.n_clusters)],
-            # [f"#={df_scores['card'][i]} - s={np.round(df_scores['mean'][i], 3)}" for i in self.idx]
-            [f"{i} : #={self.df_scores['card'][self.idx[i]]}" for i in  range(self.n_clusters)],
-            loc='lower center',
-            ncol=self.n_clusters,
-            bbox_to_anchor=(0.5, -0.05),
-        )
+        # self.fig.legend(
+        #     [mpatches.Patch(color=self.colors[i]) for i in range(self.n_clusters)],
+        #     # [f"#={df_scores['card'][i]} - s={np.round(df_scores['mean'][i], 3)}" for i in self.idx]
+        #     [f"{i} : #={self.df_scores['card'][self.idx[i]]}" for i in  range(self.n_clusters)],
+        #     loc='lower center',
+        #     ncol=self.n_clusters,
+        #     bbox_to_anchor=(0.5, -0.05),
+        # )
         
         square = int(np.sqrt(self.n_clusters))
 
@@ -349,7 +349,7 @@ class Kmeans():
         fig.tight_layout()
         return fig
 
-    def make_cluster_map(self, preds, shape, df_scores):
+    def make_cluster_map(self, preds, shape):
         print("SHAPE",shape)   
         gs01 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=self.main_grid[1])
 
@@ -391,19 +391,21 @@ class Kmeans():
 
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-          
+        print(img)
         plt.imsave(self.expe_path + f'cluster_img_{self.n_clusters}.png', img)
         plt.imsave(self.expe_path + f'cluster_img_{self.n_clusters}.svg', img)
         return self.fig
     
     
     
-    def save_X_vis(self,X_vis):
-        path= self.distance_matrix_path+f'{self.n_clusters}_{self.dataset_name}.npy'
-        np.save( path, X_vis)
+    def save_data_merge(self,X,preds):
+        np.save(self.distance_matrix_path +f'X_{self.n_clusters}_{self.dataset_name}.npy', X)
+        np.save(self.distance_matrix_path +f'{self.n_clusters}_{self.dataset_name}.npy', preds)
 
     def vis(self, X_vis, preds, shape, df_scores, refc=None, show = True):
-
+        colors = np.uint8((np.arange(0, self.n_clusters)/self.n_clusters)*255)
+        self.colors = plt.get_cmap('terrain')(colors)
+        print("dindzé",colors)
         # gridspec inside gridspec
         self.fig = plt.figure(
             figsize=set_size(width=tex_witdh_in_pt, 
@@ -417,7 +419,7 @@ class Kmeans():
  
         subfig = self.plot_kmeans_label(X_vis, preds, refc)
 
-        subfig = self.make_cluster_map(preds, shape, df_scores=df_scores)
+        subfig = self.make_cluster_map(preds, shape)
 
         # plt.suptitle(f'Norm : {self.norm_name}, dist : {self.dist_name}, K = {self.n_clusters}')
 
@@ -434,7 +436,7 @@ class Kmeans():
         fig.savefig(self.expe_path + f'clusters_{self.n_clusters}.png')
         fig.savefig(self.expe_path + f'clusters_{self.n_clusters}.svg')
 
-        #self.save_X_vis(X_vis)
+        #self.save_preds(X_vis)
 
     def __call__(self, X_raw, samples_for_distance_matrix, shape, refc=None , show = True, raw=True):
 
@@ -447,8 +449,7 @@ class Kmeans():
             X = X_raw
         if self.n_clusters == -1 :
             self.n_clusters = self.optimal_k(X)
-        colors = np.uint8((np.arange(0, self.n_clusters)/self.n_clusters)*255)
-        self.colors = plt.get_cmap('terrain')(colors)
+
  
         if self.dist_name == 'dtw':
             self.centroid, preds = self.kmeans_fit_dtw(X, self.n_clusters, ntimes=self.ntimes)
@@ -471,8 +472,9 @@ class Kmeans():
         print('Inertia : ', self.inertia(X, self.centroid, self.dist))
         print('Average Silhouette score : ', global_sil_scores.mean())
         print('Averaged per Class Silhouette Score : ', df_scores['mean'].mean())
+        print("PREDS",preds)
 
-        self.save_X_vis(X)
+        self.save_data_merge(X,preds)
         self.vis(X, preds, shape, df_scores=df_scores, refc=refc,show=show)
 
         print('Ending at ', str(datetime.datetime.now()))
@@ -516,13 +518,14 @@ def main_kmeans(name,ntl_type="DMSP",clusters=[-1],show=False,resize=False, firs
                       'norm': norm,
                       'ntl' : ntl_type,
                       'dataset_name': name,
-                      'x_range': range(first_year, last_year+1)
+                      'x_range': range(first_year, last_year+1),
+                      'first_year' : first_year,
+                      'last_year' : last_year
                       }
 
-            km = Kmeans(**params, first_year=first_year, last_year=last_year)
+            km = Kmeans(**params)
 
             km(ntls, samples_for_distance_matrix=1000, shape=data.getShape(),show=show)
-
 
 
 
