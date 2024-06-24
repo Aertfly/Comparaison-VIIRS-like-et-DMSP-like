@@ -88,6 +88,10 @@ class Kmeans():
         self.aois = aois
         self.mask = mask
 
+    def set_expe_path(self, new):
+        self.expe_path = new
+        os.makedirs(self.expe_path, exist_ok=True)
+
     def optimal_k(self, X,max_clusters=15):  
         print("Nombre de cluster optimal en cours de recherche...")
         inertias = []
