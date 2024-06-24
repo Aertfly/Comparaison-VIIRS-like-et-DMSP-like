@@ -303,8 +303,6 @@ class Kmeans():
         else:
             idx = range(self.n_clusters)
         self.idx = idx 
-
-        print(self.idx)
         # self.fig.legend(
         #     [mpatches.Patch(color=self.colors[i]) for i in range(self.n_clusters)],
         #     # [f"#={df_scores['card'][i]} - s={np.round(df_scores['mean'][i], 3)}" for i in self.idx]
@@ -391,7 +389,6 @@ class Kmeans():
 
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-        print(img)
         plt.imsave(self.expe_path + f'cluster_img_{self.n_clusters}.png', img)
         plt.imsave(self.expe_path + f'cluster_img_{self.n_clusters}.svg', img)
         return self.fig
@@ -405,7 +402,6 @@ class Kmeans():
     def vis(self, X_vis, preds, shape, df_scores, refc=None, show = True):
         colors = np.uint8((np.arange(0, self.n_clusters)/self.n_clusters)*255)
         self.colors = plt.get_cmap('terrain')(colors)
-        print("dindzé",colors)
         # gridspec inside gridspec
         self.fig = plt.figure(
             figsize=set_size(width=tex_witdh_in_pt, 
@@ -413,7 +409,6 @@ class Kmeans():
                              fact=1.5),
             dpi=150
             )
-
 
         self.main_grid = gridspec.GridSpec(1, 2, figure=self.fig)
  
@@ -438,19 +433,16 @@ class Kmeans():
 
         #self.save_preds(X_vis)
 
-    def __call__(self, X_raw, samples_for_distance_matrix, shape, refc=None , show = True, raw=True):
-
+    def __call__(self, X_raw, samples_for_distance_matrix, shape, refc=None , show = True):
         print('--------------' + f'K = {self.n_clusters}' + '---------------')
         print('Starting at ', str(datetime.datetime.now()))
         tic = time.time()
-        if raw:
-            X, mean = self.norm(X_raw)
-        else:
-            X = X_raw
+        
+        X, mean = self.norm(X_raw)
+
         if self.n_clusters == -1 :
             self.n_clusters = self.optimal_k(X)
 
- 
         if self.dist_name == 'dtw':
             self.centroid, preds = self.kmeans_fit_dtw(X, self.n_clusters, ntimes=self.ntimes)
         else:
